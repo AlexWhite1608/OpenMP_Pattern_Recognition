@@ -1,0 +1,9 @@
+{
+    "cmake.configureOnOpen": true,
+    "cmake.buildDirectory": "${workspaceFolder}/build",
+    "cmake.installPrefix": "${workspaceFolder}/install",
+    "files.associations": {
+        "*.txt": "cmake"
+    },
+    "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools"
+}
