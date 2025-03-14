@@ -57,3 +57,6 @@ Testing/
 # Temporary files
 *.tmp
 *.log
+
+# dataset
+src/utils/data/
