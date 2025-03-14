@@ -49,10 +49,10 @@ def generate_series(length):
 dataset = [generate_series(SERIES_LENGTH) for _ in range(NUM_SERIES)]
 df_dataset = pd.DataFrame(dataset)
 df_dataset.to_csv(CSV_FILENAME, index=False, header=False)
-print(f"Dataset con {NUM_SERIES} serie di lunghezza {SERIES_LENGTH} salvato")
+print(f"Dataset salvato in {CSV_FILENAME}")
 
 # genera query
 query_series = generate_series(QUERY_LENGTH)
 df_query = pd.DataFrame([query_series])
 df_query.to_csv(QUERY_FILENAME, index=False, header=False)
-print(f"Query di lunghezza {QUERY_LENGTH} salvata")
+print(f"Query salvata in {QUERY_FILENAME}")

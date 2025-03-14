@@ -5,7 +5,7 @@
       "name": "Debug",
       "type": "cppdbg",
       "request": "launch",
-      "program": "${workspaceFolder}/build/bin/Pattern_Recognition",
+      "program": "${workspaceFolder}/build/Pattern_Recognition",
       "args": [],
       "stopAtEntry": false,
       "cwd": "${workspaceFolder}",
