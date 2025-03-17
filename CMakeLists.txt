@@ -15,3 +15,8 @@ target_include_directories(Pattern_Recognition PRIVATE
 )
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+
+add_custom_command(TARGET Pattern_Recognition POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+    ${CMAKE_SOURCE_DIR}/src/utils ${CMAKE_BINARY_DIR}/src/utils
+)
