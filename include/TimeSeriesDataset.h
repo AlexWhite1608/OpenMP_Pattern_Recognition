@@ -30,6 +30,18 @@ public:
         return data[index];
     }
 
+    void print() const
+    {
+        for (const auto &series : data)
+        {
+            for (const auto &value : series)
+            {
+                std::cout << value << "\n";
+            }
+            std::cout << std::endl;
+        }
+    }
+
 private:
     std::vector<std::vector<double>> data;
 };
