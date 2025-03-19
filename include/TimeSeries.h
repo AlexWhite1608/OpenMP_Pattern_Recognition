@@ -1,3 +1,6 @@
+#ifndef TIMESERIES_H
+#define TIMESERIES_H
+
 #include <vector>
 #include <iostream>
 
@@ -23,3 +26,5 @@ public:
 private:
     std::vector<double> data;
 };
+
+#endif // TIMESERIES_H

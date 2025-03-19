@@ -1,10 +1,12 @@
+#ifndef TIMESERIESDATASET_H
+#define TIMESERIESDATASET_H
+
 #include <vector>
 #include <iostream>
 
 // Implementazione SoA
 class TimeSeriesDataset
 {
-
 public:
     void addSeries(const std::vector<double> &values)
     {
@@ -45,3 +47,5 @@ public:
 private:
     std::vector<std::vector<double>> data;
 };
+
+#endif // TIMESERIESDATASET_H

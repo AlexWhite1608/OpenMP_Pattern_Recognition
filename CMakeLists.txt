@@ -6,6 +6,8 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 
 set(SOURCES 
     src/main.cpp
+    src/DataLoading.cpp
+    src/SearchEngine.cpp
 )
 
 add_executable(Pattern_Recognition ${SOURCES})
