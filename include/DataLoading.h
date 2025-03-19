@@ -37,7 +37,7 @@ std::vector<TimeSeries> loadTimeSeriesAoS(const std::string &filename)
 }
 
 // Importa la timeseries dal csv (SoA)
-TimeSeriesDataset loadTimeSeriesDatasetFromCSV(const std::string &filename)
+TimeSeriesDataset loadTimeSeriesDatasetSoA(const std::string &filename)
 {
     TimeSeriesDataset dataset;
     std::ifstream file(filename);

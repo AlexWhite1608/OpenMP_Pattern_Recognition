@@ -1,11 +1,11 @@
 #include <vector>
 #include <iostream>
 
+// Implementazione SoA
 class TimeSeriesDataset
 {
 
 public:
-
     void addSeries(const std::vector<double> &values)
     {
         data.push_back(values);
@@ -36,7 +36,7 @@ public:
         {
             for (const auto &value : series)
             {
-                std::cout << value << "\n";
+                std::cout << value << " ";
             }
             std::cout << std::endl;
         }

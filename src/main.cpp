@@ -14,7 +14,7 @@ int main()
     std::vector<TimeSeries> datasetAos = loadTimeSeriesAoS(timeseriesPath);
 
     // Carico in formato SoA
-    TimeSeriesDataset datasetSoa = loadTimeSeriesDatasetFromCSV(timeseriesPath);
+    TimeSeriesDataset datasetSoa = loadTimeSeriesDatasetSoA(timeseriesPath);
 
     std::cout << "Numero di serie temporali nel dataset Aos: " << datasetAos.size() << std::endl;
     std::cout << "Numero di serie temporali nel dataset Soa: " << datasetSoa.getNumSeries() << std::endl;
