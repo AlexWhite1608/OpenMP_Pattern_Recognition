@@ -8,8 +8,8 @@
 
 int main()
 {
-    std::string timeseriesPath = "src/utils/data/timeseries/timeseries_2_100.csv";
-    std::string queryPath = "src/utils/data/query/query_50.csv";
+    std::string timeseriesPath = "src/utils/data/timeseries/timeseries.csv";
+    std::string queryPath = "src/utils/data/query/query.csv";
 
     // carico dati da csv
     std::vector<TimeSeries> datasetAos = loadTimeSeriesAoS(timeseriesPath);
