@@ -60,3 +60,5 @@ Testing/
 
 # dataset
 src/utils/data/
+
+output/

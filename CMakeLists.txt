@@ -8,6 +8,7 @@ set(SOURCES
     src/main.cpp
     src/DataLoading.cpp
     src/SearchEngine.cpp
+    src/Benchmark.cpp
 )
 
 add_executable(Pattern_Recognition ${SOURCES})
