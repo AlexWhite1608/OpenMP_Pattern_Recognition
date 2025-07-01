@@ -29,9 +29,6 @@ public:
                                                   const TimeSeries &query,
                                                   const std::string &test_name);
 
-    static void saveResultsToCSV(const std::vector<BenchmarkResult> &results,
-                                 const std::string &filename);
-
     static bool validateResults(const std::vector<double> &sadSoA,
                                 const std::vector<double> &sadAoS,
                                 size_t bestIndexSoA,

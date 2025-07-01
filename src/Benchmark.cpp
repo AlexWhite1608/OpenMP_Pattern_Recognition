@@ -62,24 +62,3 @@ bool Benchmark::validateResults(const std::vector<double>& sadSoA,
     }
     return true;
 }
-
-//TODO:
-void Benchmark::saveResultsToCSV(const std::vector<BenchmarkResult>& results, 
-                                const std::string& filename) {
-    std::ofstream file(filename);
-    
-    // Header
-    file << "Algorithm,NumSeries,SeriesLength,QueryLength,ExecutionTime_ms,BestIndex,BestSAD,ResultsMatch\n";
-    
-    // Data
-    for (const auto& result : results) {
-        file << result.algorithm_name << ","
-             << result.num_series << ","
-             << result.series_length << ","
-             << result.query_length << ","
-             << std::fixed << std::setprecision(3) << result.execution_time_ms << ","
-             << result.best_match_index << ","
-             << std::fixed << std::setprecision(6) << result.best_sad_value << ","
-             << (result.results_match_reference ? "true" : "false") << "\n";
-    }
-}
