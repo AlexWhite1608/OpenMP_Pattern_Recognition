@@ -1,5 +1,6 @@
 #include "../include/SearchEngine.h"
 #include <cmath>
+#include "SearchEngine.h"
 
 std::pair<std::vector<double>, size_t> SearchEngine::searchSequentialSoA(const TimeSeriesDataset &dataset, const TimeSeries &query)
 {
@@ -8,6 +9,7 @@ std::pair<std::vector<double>, size_t> SearchEngine::searchSequentialSoA(const T
     size_t bestIndex = 0;
     double bestSad = std::numeric_limits<double>::max();
 
+    // TODO: parallelizza
     for (size_t i = 0; i < dataset.getNumSeries(); ++i)
     {
         const std::vector<double> &series = dataset.getSeries(i);
@@ -35,6 +37,7 @@ std::pair<std::vector<double>, size_t> SearchEngine::searchSequentialSoA(const T
         // la query è più corta della timeseries quindi faccio una sliding window
         else
         {
+            // TODO: parallelizza
             for (size_t j = 0; j <= seriesLength - queryLength; ++j)
             {
                 double sad = 0.0;
@@ -121,4 +124,24 @@ std::pair<std::vector<double>, size_t> SearchEngine::searchSequentialAoS(const s
     }
 
     return {sadValues, bestIndex};
+}
+
+std::pair<std::vector<double>, size_t> SearchEngine::searchSequentialSoA_parallelOuter(const TimeSeriesDataset &dataset, const TimeSeries &query)
+{
+    return std::pair<std::vector<double>, size_t>();
+}
+
+std::pair<std::vector<double>, size_t> SearchEngine::searchSequentialAoS_parallelOuter(const std::vector<TimeSeries> &dataset, const TimeSeries &query)
+{
+    return std::pair<std::vector<double>, size_t>();
+}
+
+std::pair<std::vector<double>, size_t> SearchEngine::searchSequentialSoA_parallelInner(const TimeSeriesDataset &dataset, const TimeSeries &query)
+{
+    return std::pair<std::vector<double>, size_t>();
+}
+
+std::pair<std::vector<double>, size_t> SearchEngine::searchSequentialAoS_parallelInner(const std::vector<TimeSeries> &dataset, const TimeSeries &query)
+{
+    return std::pair<std::vector<double>, size_t>();
 }
