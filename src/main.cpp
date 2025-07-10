@@ -1,66 +1,55 @@
 #include <iostream>
 #include <vector>
 #include <string>
-#include "../include/DataLoading.h"
-#include "../include/SearchEngine.h"
 #include "../include/Benchmark.h"
-#include <iomanip>
+#include <fstream>
 
-// parametri: num_series, series_length, query_length
-int main(int argc, char *argv[])
+int main()
 {
-    int num_series = std::stoi(argv[1]);
-    int series_length = std::stoi(argv[2]);
-    int query_length = std::stoi(argv[3]);
+    std::vector<TestConfiguration> configurations;
 
-    std::string test_name = std::to_string(num_series) + "_" +
-                            std::to_string(series_length) + "_" +
-                            std::to_string(query_length);
+    // configurazione dei test: num_series, series_length, query_length
+    std::vector<std::tuple<int, int, int>> test_cases = {
+        {100, 500, 100},
+        {500, 1000, 100},
+        {1000, 5000, 100}};
 
-    // Carica dataset
-    std::string timeseriesPath = "src/utils/data/timeseries/timeseries.csv";
-    std::string queryPath = "src/utils/data/query/query.csv";
-
-    std::vector<TimeSeries> datasetAos = loadTimeSeriesAoS(timeseriesPath);
-    TimeSeriesDataset datasetSoa = loadTimeSeriesDatasetSoA(timeseriesPath);
-    std::vector<TimeSeries> query = loadTimeSeriesAoS(queryPath);
-
-    if (datasetAos.empty() || query.empty())
+    for (const auto &[num_series, series_length, query_length] : test_cases)
     {
-        std::cerr << "Errore nel caricamento dei dati!" << std::endl;
-        return 1;
+        TestConfiguration config;
+        config.num_series = num_series;
+        config.series_length = series_length;
+        config.query_length = query_length;
+        config.dataset_path = "src/utils/data/timeseries/timeseries.csv";
+        config.query_path = "src/utils/data/query/query.csv";
+        configurations.push_back(config);
     }
 
-    std::cout << "=== BENCHMARK PERFORMANCE ===" << std::endl;
-    std::cout << "Dataset: " << num_series << " series × " << series_length << " points" << std::endl;
-    std::cout << "Query length: " << query_length << std::endl;
-    std::cout << "================================" << std::endl;
+    std::cout << "=== BENCHMARK PERFORMANCE COMPARISON ===" << std::endl;
+    std::cout << "Running " << configurations.size() << " tests..." << std::endl;
+    std::cout << "=========================================" << std::endl;
 
-    std::vector<BenchmarkResult> results;
+    auto results = Benchmark::run_multiple_tests(configurations);
 
-    // Benchmark Sequential SoA
-    auto resultSoA = Benchmark::benchmarkSequentialSoA(datasetSoa, query[0], test_name);
-    results.push_back(resultSoA);
+    std::filesystem::create_directories("output/benchmark_results");
+    std::string output_filename = "output/benchmark_results/sequential.json";
+    std::ofstream output_file(output_filename);
+    output_file << results.dump(2);
+    output_file.close();
 
-    // Benchmark Sequential AoS
-    auto resultAoS = Benchmark::benchmarkSequentialAoS(datasetAos, query[0], test_name);
-    results.push_back(resultAoS);
 
-    // Validazione risultati
-    auto [sadSoA, bestIndexSoA] = SearchEngine::searchSequentialSoA(datasetSoa, query[0]);
-    auto [sadAoS, bestIndexAoS] = SearchEngine::searchSequentialAoS(datasetAos, query[0]);
+    std::cout << "\n=== RESULTS SUMMARY ===" << std::endl;
+    for (const auto &test : results["tests"])
+    {
+        std::cout << "Test: " << test["test_name"] << std::endl;
+        std::cout << "  SoA: " << test["results"]["soa"]["execution_time_ms"] << " ms" << std::endl;
+        std::cout << "  AoS: " << test["results"]["aos"]["execution_time_ms"] << " ms" << std::endl;
+        std::cout << "  Speedup: " << test["performance"]["speedup"] << "x" << std::endl;
+        std::cout << "  Match: " << (test["performance"]["results_match"] ? "true" : "false") << std::endl;
+        std::cout << std::endl;
+    }
 
-    bool results_match = Benchmark::validateResults(sadSoA, sadAoS, bestIndexSoA, bestIndexAoS);
-
-    std::cout << "\n=== RESULTS ===" << std::endl;
-    std::cout << "Sequential SoA: " << resultSoA.execution_time_ms << " ms" << std::endl;
-    std::cout << "Sequential AoS: " << resultAoS.execution_time_ms << " ms" << std::endl;
-
-    double speedup = resultAoS.execution_time_ms / resultSoA.execution_time_ms;
-    std::cout << "SoA Speedup: " << std::fixed << std::setprecision(2) << speedup << "x" << std::endl;
-    std::cout << "Results match: " << (results_match ? "✓ YES" : "✗ NO") << std::endl;
-    std::cout << "Best match index: " << bestIndexSoA << std::endl;
-    std::cout << "Best SAD value: " << std::fixed << std::setprecision(6) << resultSoA.best_sad_value << std::endl;
+    std::cout << "Results saved to: " << output_filename << std::endl;
 
     return 0;
 }
