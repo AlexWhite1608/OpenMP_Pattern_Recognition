@@ -16,8 +16,8 @@ NUM_SERIES = int(sys.argv[1])       # numero di serie
 SERIES_LENGTH = int(sys.argv[2])    # lunghezza di ogni serie
 QUERY_LENGTH = int(sys.argv[3])     # lunghezza query
 
-CSV_FILENAME = f"data/timeseries/timeseries.csv"
-QUERY_FILENAME = f"data/query/query.csv"
+CSV_FILENAME = f"data/timeseries/timeseries_{NUM_SERIES}_{SERIES_LENGTH}_{QUERY_LENGTH}.csv"
+QUERY_FILENAME = f"data/query/query_{NUM_SERIES}_{SERIES_LENGTH}_{QUERY_LENGTH}.csv"
 
 # Generazione del dataset a partire dai dati ricevuti in input dove il trend è casuale
 # con stagionalità sinusoidale e rumore gaussiano

@@ -30,8 +30,6 @@ int main()
         config.num_series = num_series;
         config.series_length = series_length;
         config.query_length = query_length;
-        config.dataset_path = "src/utils/data/timeseries/timeseries.csv";
-        config.query_path = "src/utils/data/query/query.csv";
         configurations.push_back(config);
     }
 

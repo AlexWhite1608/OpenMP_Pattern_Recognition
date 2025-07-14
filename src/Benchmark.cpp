@@ -160,11 +160,23 @@ bool Benchmark::generateDataset(const TestConfiguration &config)
         return false;
     }
 
+    std::string dataset_filename = "src/utils/data/timeseries/timeseries_" +
+                                   std::to_string(config.num_series) + "_" +
+                                   std::to_string(config.series_length) + "_" +
+                                   std::to_string(config.query_length) + ".csv";
+
+    std::string query_filename = "src/utils/data/query/query_" +
+                                 std::to_string(config.num_series) + "_" +
+                                 std::to_string(config.series_length) + "_" +
+                                 std::to_string(config.query_length) + ".csv";
+
     // verifica che i file siano creati
-    if (!std::filesystem::exists(config.dataset_path) ||
-        !std::filesystem::exists(config.query_path))
+    if (!std::filesystem::exists(dataset_filename) ||
+        !std::filesystem::exists(query_filename))
     {
         std::cerr << "Dataset files not found after generation" << std::endl;
+        std::cerr << "Expected dataset: " << dataset_filename << std::endl;
+        std::cerr << "Expected query: " << query_filename << std::endl;
         return false;
     }
 
@@ -186,9 +198,12 @@ nlohmann::json Benchmark::run_test(const TestConfiguration &config)
                             std::to_string(config.series_length) + "_" +
                             std::to_string(config.query_length);
 
-    std::vector<TimeSeries> datasetAos = loadTimeSeriesAoS(config.dataset_path);
-    TimeSeriesDataset datasetSoa = loadTimeSeriesDatasetSoA(config.dataset_path);
-    std::vector<TimeSeries> query = loadTimeSeriesAoS(config.query_path);
+    std::string dataset_path = "src/utils/data/timeseries/timeseries_" + test_name + ".csv";
+    std::string query_path = "src/utils/data/query/query_" + test_name + ".csv";
+
+    std::vector<TimeSeries> datasetAos = loadTimeSeriesAoS(dataset_path);
+    TimeSeriesDataset datasetSoa = loadTimeSeriesDatasetSoA(dataset_path);
+    std::vector<TimeSeries> query = loadTimeSeriesAoS(query_path);
 
     if (datasetAos.empty() || query.empty())
     {
