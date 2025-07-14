@@ -49,11 +49,6 @@ public:
     static BenchmarkResult benchmarkAoS_parallelOuter(const std::vector<TimeSeries> &dataset, const TimeSeries &query, const std::string &test_name);
     static BenchmarkResult benchmarkAoS_parallelInner(const std::vector<TimeSeries> &dataset, const TimeSeries &query, const std::string &test_name);
 
-    // static bool validateResults(const std::vector<double> &sadSoA,
-    //                             const std::vector<double> &sadAoS,
-    //                             size_t bestIndexSoA,
-    //                             size_t bestIndexAoS);
-
     static bool generateDataset(const TestConfiguration &config);
 
     static nlohmann::json run_test(const TestConfiguration &config);
