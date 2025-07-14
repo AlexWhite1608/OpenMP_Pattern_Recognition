@@ -5,6 +5,7 @@
 #include "TimeSeriesDataset.h"
 #include <vector>
 #include <utility>
+#include <omp.h>
 
 class SearchEngine
 {
@@ -14,12 +15,12 @@ public:
     static std::pair<std::vector<double>, size_t> searchSequentialAoS(const std::vector<TimeSeries> &dataset, const TimeSeries &query);
 
     // parallelizzazione loop esterno
-    static std::pair<std::vector<double>, size_t> searchSequentialSoA_parallelOuter(const TimeSeriesDataset &dataset, const TimeSeries &query);
-    static std::pair<std::vector<double>, size_t> searchSequentialAoS_parallelOuter(const std::vector<TimeSeries> &dataset, const TimeSeries &query);
+    static std::pair<std::vector<double>, size_t> searchParallelSoAOuter(const TimeSeriesDataset &dataset, const TimeSeries &query);
+    static std::pair<std::vector<double>, size_t> searchParallelAoSOuter(const std::vector<TimeSeries> &dataset, const TimeSeries &query);
 
     // parallelizzazione sliding window
-    static std::pair<std::vector<double>, size_t> searchSequentialSoA_parallelInner(const TimeSeriesDataset &dataset, const TimeSeries &query);
-    static std::pair<std::vector<double>, size_t> searchSequentialAoS_parallelInner(const std::vector<TimeSeries> &dataset, const TimeSeries &query);
+    static std::pair<std::vector<double>, size_t> searchParallelSoAInner(const TimeSeriesDataset &dataset, const TimeSeries &query);
+    static std::pair<std::vector<double>, size_t> searchParallelAoSInner(const std::vector<TimeSeries> &dataset, const TimeSeries &query);
 };
 
 #endif // SEARCHENGINE_H
