@@ -8,7 +8,7 @@
 int main()
 {
 
-    int NUM_THREADS = 4;
+    int NUM_THREADS = 16;
     omp_set_num_threads(NUM_THREADS);
 
     std::vector<TestConfiguration> configurations;
