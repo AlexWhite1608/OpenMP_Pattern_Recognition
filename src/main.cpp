@@ -8,7 +8,7 @@
 int main()
 {
 
-    int NUM_THREADS = 16;
+    int NUM_THREADS = 8;
     omp_set_num_threads(NUM_THREADS);
 
     std::vector<TestConfiguration> configurations;
@@ -37,7 +37,7 @@ int main()
     std::cout << "Running " << configurations.size() << " tests..." << std::endl;
     std::cout << "OpenMP Configuration:" << std::endl;
     std::cout << "  Max threads available: " << omp_get_max_threads() << std::endl;
-    std::cout << "  Number of processors: " << omp_get_num_procs() << std::endl;
+    std::cout << "  Number of cores: " << omp_get_num_procs() << std::endl;
     std::cout << "=========================================" << std::endl;
 
     auto results = Benchmark::run_multiple_tests(configurations);
