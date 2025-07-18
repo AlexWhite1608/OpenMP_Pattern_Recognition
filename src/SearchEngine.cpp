@@ -294,11 +294,13 @@ std::pair<std::vector<double>, size_t> SearchEngine::searchParallelSoAInner(cons
         }
 
         sadValues[i] = minSad;
-
-        if (minSad < bestSad)
+#pragma omp critical
         {
-            bestSad = minSad;
-            bestIndex = i;
+            if (minSad < bestSad)
+            {
+                bestSad = minSad;
+                bestIndex = i;
+            }
         }
     }
 
@@ -353,10 +355,13 @@ std::pair<std::vector<double>, size_t> SearchEngine::searchParallelAoSInner(cons
 
         sadValues[i] = minSad;
 
-        if (minSad < bestSad)
+#pragma omp critical
         {
-            bestSad = minSad;
-            bestIndex = i;
+            if (minSad < bestSad)
+            {
+                bestSad = minSad;
+                bestIndex = i;
+            }
         }
     }
 
