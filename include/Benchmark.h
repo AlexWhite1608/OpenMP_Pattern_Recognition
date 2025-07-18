@@ -16,10 +16,16 @@ struct BenchmarkResult
     int num_series;
     int series_length;
     int query_length;
-    double execution_time_ms;
+    
+    std::vector<double> execution_times_ms;  // Tutti i tempi di ogni run
+    double mean_execution_time_ms;           
+    double std_deviation_ms;                 
+    double min_execution_time_ms;            
+    double max_execution_time_ms;            
+    
     size_t best_match_index;
     double best_sad_value;
-    double parallel_speedup = 1.0;
+    int num_runs;
     bool results_match_reference = true;
 };
 
@@ -28,6 +34,7 @@ struct TestConfiguration
     int num_series;
     int series_length;
     int query_length;
+    int num_runs = 10;  
     std::string dataset_path;
     std::string query_path;
 };
@@ -35,19 +42,33 @@ struct TestConfiguration
 class Benchmark
 {
 public:
-    // SoA
+    // SoA 
     static BenchmarkResult benchmarkSequentialSoA(const TimeSeriesDataset &dataset,
                                                   const TimeSeries &query,
-                                                  const std::string &test_name);
-    static BenchmarkResult benchmarkSoA_parallelOuter(const TimeSeriesDataset &dataset, const TimeSeries &query, const std::string &test_name);
-    static BenchmarkResult benchmarkSoA_parallelInner(const TimeSeriesDataset &dataset, const TimeSeries &query, const std::string &test_name);
+                                                  const std::string &test_name,
+                                                  int num_runs = 1);
+    static BenchmarkResult benchmarkSoA_parallelOuter(const TimeSeriesDataset &dataset, 
+                                                     const TimeSeries &query, 
+                                                     const std::string &test_name,
+                                                     int num_runs = 1);
+    static BenchmarkResult benchmarkSoA_parallelInner(const TimeSeriesDataset &dataset, 
+                                                     const TimeSeries &query, 
+                                                     const std::string &test_name,
+                                                     int num_runs = 1);
 
-    // AoS
+    // AoS 
     static BenchmarkResult benchmarkSequentialAoS(const std::vector<TimeSeries> &dataset,
                                                   const TimeSeries &query,
-                                                  const std::string &test_name);
-    static BenchmarkResult benchmarkAoS_parallelOuter(const std::vector<TimeSeries> &dataset, const TimeSeries &query, const std::string &test_name);
-    static BenchmarkResult benchmarkAoS_parallelInner(const std::vector<TimeSeries> &dataset, const TimeSeries &query, const std::string &test_name);
+                                                  const std::string &test_name,
+                                                  int num_runs = 1);
+    static BenchmarkResult benchmarkAoS_parallelOuter(const std::vector<TimeSeries> &dataset, 
+                                                     const TimeSeries &query, 
+                                                     const std::string &test_name,
+                                                     int num_runs = 1);
+    static BenchmarkResult benchmarkAoS_parallelInner(const std::vector<TimeSeries> &dataset, 
+                                                     const TimeSeries &query, 
+                                                     const std::string &test_name,
+                                                     int num_runs = 1);
 
     static bool generateDataset(const TestConfiguration &config);
 

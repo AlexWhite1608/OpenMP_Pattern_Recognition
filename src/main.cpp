@@ -7,8 +7,8 @@
 
 int main()
 {
-
-    int NUM_THREADS = 8;
+    const int NUM_RUNS = 20; 
+    const int NUM_THREADS = 8;
     omp_set_num_threads(NUM_THREADS);
 
     std::vector<TestConfiguration> configurations;
@@ -30,14 +30,16 @@ int main()
         config.num_series = num_series;
         config.series_length = series_length;
         config.query_length = query_length;
+        config.num_runs = NUM_RUNS;
         configurations.push_back(config);
     }
 
     std::cout << "=== BENCHMARK PERFORMANCE COMPARISON ===" << std::endl;
     std::cout << "Running " << configurations.size() << " tests..." << std::endl;
-    std::cout << "OpenMP Configuration:" << std::endl;
-    std::cout << "  Max threads available: " << omp_get_max_threads() << std::endl;
-    std::cout << "  Number of cores: " << omp_get_num_procs() << std::endl;
+    std::cout << "Benchmark Configuration:" << std::endl;
+    std::cout << "  Number of runs per test: " << NUM_RUNS << std::endl;
+    std::cout << "  OpenMP max threads: " << omp_get_max_threads() << std::endl;
+    std::cout << "  Number of CPU cores: " << omp_get_num_procs() << std::endl;
     std::cout << "=========================================" << std::endl;
 
     auto results = Benchmark::run_multiple_tests(configurations);
@@ -62,19 +64,25 @@ int main()
                   << test["configuration"]["series_length"] << " points" << std::endl;
 
         // SoA
-        std::cout << "  SoA Results:" << std::endl;
-        std::cout << "    Sequential: " << test["results"]["soa"]["sequential"]["execution_time_ms"] << " ms" << std::endl;
-        std::cout << "    Parallel Outer: " << test["results"]["soa"]["parallel_outer"]["execution_time_ms"] << " ms"
+        std::cout << "  SoA Results (avg of " << test["configuration"]["num_runs"] << " runs):" << std::endl;
+        std::cout << "    Sequential: " << test["results"]["soa"]["sequential"]["mean_execution_time_ms"]
+                  << " ± " << test["results"]["soa"]["sequential"]["std_deviation_ms"] << " ms" << std::endl;
+        std::cout << "    Parallel Outer: " << test["results"]["soa"]["parallel_outer"]["mean_execution_time_ms"]
+                  << " ± " << test["results"]["soa"]["parallel_outer"]["std_deviation_ms"] << " ms"
                   << " (speedup: " << test["results"]["soa"]["parallel_outer"]["speedup"] << "x)" << std::endl;
-        std::cout << "    Parallel Inner: " << test["results"]["soa"]["parallel_inner"]["execution_time_ms"] << " ms"
+        std::cout << "    Parallel Inner: " << test["results"]["soa"]["parallel_inner"]["mean_execution_time_ms"]
+                  << " ± " << test["results"]["soa"]["parallel_inner"]["std_deviation_ms"] << " ms"
                   << " (speedup: " << test["results"]["soa"]["parallel_inner"]["speedup"] << "x)" << std::endl;
 
         // AoS
-        std::cout << "  AoS Results:" << std::endl;
-        std::cout << "    Sequential: " << test["results"]["aos"]["sequential"]["execution_time_ms"] << " ms" << std::endl;
-        std::cout << "    Parallel Outer: " << test["results"]["aos"]["parallel_outer"]["execution_time_ms"] << " ms"
+        std::cout << "  AoS Results (avg of " << test["configuration"]["num_runs"] << " runs):" << std::endl;
+        std::cout << "    Sequential: " << test["results"]["aos"]["sequential"]["mean_execution_time_ms"]
+                  << " ± " << test["results"]["aos"]["sequential"]["std_deviation_ms"] << " ms" << std::endl;
+        std::cout << "    Parallel Outer: " << test["results"]["aos"]["parallel_outer"]["mean_execution_time_ms"]
+                  << " ± " << test["results"]["aos"]["parallel_outer"]["std_deviation_ms"] << " ms"
                   << " (speedup: " << test["results"]["aos"]["parallel_outer"]["speedup"] << "x)" << std::endl;
-        std::cout << "    Parallel Inner: " << test["results"]["aos"]["parallel_inner"]["execution_time_ms"] << " ms"
+        std::cout << "    Parallel Inner: " << test["results"]["aos"]["parallel_inner"]["mean_execution_time_ms"]
+                  << " ± " << test["results"]["aos"]["parallel_inner"]["std_deviation_ms"] << " ms"
                   << " (speedup: " << test["results"]["aos"]["parallel_inner"]["speedup"] << "x)" << std::endl;
 
         std::cout << "  Analysis:" << std::endl;
