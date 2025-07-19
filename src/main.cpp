@@ -7,7 +7,7 @@
 
 int main()
 {
-    const int NUM_RUNS = 20; 
+    const int NUM_RUNS = 5;
     const int NUM_THREADS = 8;
     omp_set_num_threads(NUM_THREADS);
 
@@ -15,13 +15,13 @@ int main()
 
     // configurazione dei test: num_series, series_length, query_length
     std::vector<std::tuple<int, int, int>> test_cases = {
-        // Molte serie corte (favorisce outer parallelization)
-        {2000, 300, 100},
-        {4000, 300, 100},
+        // Casi estremi per outer parallelization (molte serie corte)
+        {10000, 150, 50}, 
+        {20000, 200, 50}, 
 
-        // Poche serie lunghe (potenzialmente favorisce inner parallelization)
-        {100, 8000, 100},
-        {50, 15000, 100},
+        // Casi estremi per inner parallelization (poche serie lunghe)
+        {10, 50000, 100}, 
+        {5, 100000, 200}, 
     };
 
     for (const auto &[num_series, series_length, query_length] : test_cases)
