@@ -136,7 +136,7 @@ std::pair<std::vector<double>, size_t> SearchEngine::searchParallelSoAOuter(cons
         double localBestSad = std::numeric_limits<double>::max();
 
 // si usa nowait per evitare che i thread si blocchino per evitare attese inutili
-#pragma omp for nowait
+#pragma omp for nowait schedule(dynamic)
         for (size_t i = 0; i < dataset.getNumSeries(); ++i)
         {
             const std::vector<double> &series = dataset.getSeries(i);
