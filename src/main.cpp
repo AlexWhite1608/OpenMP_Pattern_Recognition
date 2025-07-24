@@ -63,7 +63,7 @@ int main()
         std::cout << "Configuration: " << test["configuration"]["num_series"] << " series × "
                   << test["configuration"]["series_length"] << " points" << std::endl;
 
-        // SoA
+        // SoA 
         std::cout << "  SoA Results (avg of " << test["configuration"]["num_runs"] << " runs):" << std::endl;
         std::cout << "    Sequential: " << test["results"]["soa"]["sequential"]["mean_execution_time_ms"]
                   << " ± " << test["results"]["soa"]["sequential"]["std_deviation_ms"] << " ms" << std::endl;

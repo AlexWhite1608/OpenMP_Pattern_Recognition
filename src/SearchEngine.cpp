@@ -14,38 +14,18 @@ std::pair<std::vector<double>, size_t> SearchEngine::searchSequentialSoA(const T
         const std::vector<double> &series = dataset.getSeries(i);
         size_t seriesLength = series.size();
 
-        // se la serie è più corta della query
-        if (seriesLength < queryLength)
-        {
-            continue;
-        }
-
         double minSad = std::numeric_limits<double>::max();
 
-        // query e timeseries hanno la stessa lunghezza
-        if (seriesLength == queryLength)
+        for (size_t j = 0; j <= seriesLength - queryLength; ++j)
         {
             double sad = 0.0;
             for (size_t k = 0; k < queryLength; ++k)
             {
-                sad += std::abs(series[k] - query.getData()[k]);
+                sad += std::abs(series[j + k] - query.getData()[k]);
             }
-            minSad = sad;
-        }
-        // la query è più corta della timeseries quindi faccio una sliding window
-        else
-        {
-            for (size_t j = 0; j <= seriesLength - queryLength; ++j)
+            if (sad < minSad)
             {
-                double sad = 0.0;
-                for (size_t k = 0; k < queryLength; ++k)
-                {
-                    sad += std::abs(series[j + k] - query.getData()[k]);
-                }
-                if (sad < minSad)
-                {
-                    minSad = sad;
-                }
+                minSad = sad;
             }
         }
 
@@ -74,38 +54,18 @@ std::pair<std::vector<double>, size_t> SearchEngine::searchSequentialAoS(const s
         const TimeSeries &timeseries = dataset[i];
         size_t seriesLength = timeseries.getSize();
 
-        // se la serie è più corta della query
-        if (seriesLength < queryLength)
-        {
-            continue;
-        }
-
         double minSad = std::numeric_limits<double>::max();
 
-        // query e timeseries hanno la stessa lunghezza
-        if (seriesLength == queryLength)
+        for (size_t j = 0; j <= seriesLength - queryLength; ++j)
         {
             double sad = 0.0;
             for (size_t k = 0; k < queryLength; ++k)
             {
-                sad += std::abs(timeseries.getData()[k] - query.getData()[k]);
+                sad += std::abs(timeseries.getData()[j + k] - query.getData()[k]);
             }
-            minSad = sad;
-        }
-        // la query è più corta della timeseries quindi faccio una sliding window
-        else
-        {
-            for (size_t j = 0; j <= seriesLength - queryLength; ++j)
+            if (sad < minSad)
             {
-                double sad = 0.0;
-                for (size_t k = 0; k < queryLength; ++k)
-                {
-                    sad += std::abs(timeseries.getData()[j + k] - query.getData()[k]);
-                }
-                if (sad < minSad)
-                {
-                    minSad = sad;
-                }
+                minSad = sad;
             }
         }
 
@@ -124,61 +84,41 @@ std::pair<std::vector<double>, size_t> SearchEngine::searchSequentialAoS(const s
 
 std::pair<std::vector<double>, size_t> SearchEngine::searchParallelSoAOuter(const TimeSeriesDataset &dataset, const TimeSeries &query)
 {
-    std::vector<double> sadValues(dataset.getNumSeries(), std::numeric_limits<double>::max());
+    size_t numSeries = dataset.getNumSeries();
     size_t queryLength = query.getSize();
+    const auto &queryData = query.getData();
 
+    std::vector<double> sadValues(numSeries, std::numeric_limits<double>::max());
     size_t bestIndex = 0;
     double bestSad = std::numeric_limits<double>::max();
 
 #pragma omp parallel
     {
-        size_t localBestIndex = 0;
         double localBestSad = std::numeric_limits<double>::max();
+        size_t localBestIndex = 0;
 
-// si usa nowait per evitare che i thread si blocchino per evitare attese inutili
-#pragma omp for nowait schedule(dynamic)
-        for (size_t i = 0; i < dataset.getNumSeries(); ++i)
+#pragma omp for schedule(dynamic)
+        for (size_t i = 0; i < numSeries; ++i)
         {
-            const std::vector<double> &series = dataset.getSeries(i);
+            const auto &series = dataset.getSeries(i);
             size_t seriesLength = series.size();
-
-            if (seriesLength < queryLength)
-            {
-                continue;
-            }
 
             double minSad = std::numeric_limits<double>::max();
 
-            if (seriesLength == queryLength)
+            for (size_t j = 0; j <= seriesLength - queryLength; ++j)
             {
                 double sad = 0.0;
+
 #pragma omp simd reduction(+ : sad)
                 for (size_t k = 0; k < queryLength; ++k)
-                {
-                    sad += std::abs(series[k] - query.getData()[k]);
-                }
-                minSad = sad;
-            }
-            else
-            {
-                for (size_t j = 0; j <= seriesLength - queryLength; ++j)
-                {
-                    double sad = 0.0;
-#pragma omp simd reduction(+ : sad)
-                    for (size_t k = 0; k < queryLength; ++k)
-                    {
-                        sad += std::abs(series[j + k] - query.getData()[k]);
-                    }
-                    if (sad < minSad)
-                    {
-                        minSad = sad;
-                    }
-                }
+                    sad += std::abs(series[j + k] - queryData[k]);
+
+                if (sad < minSad)
+                    minSad = sad;
             }
 
             sadValues[i] = minSad;
 
-            // aggiorna il minimo LOCALE al thread
             if (minSad < localBestSad)
             {
                 localBestSad = minSad;
@@ -186,7 +126,6 @@ std::pair<std::vector<double>, size_t> SearchEngine::searchParallelSoAOuter(cons
             }
         }
 
-// aggiorna il minimo GLOBALE
 #pragma omp critical
         {
             if (localBestSad < bestSad)
@@ -202,58 +141,38 @@ std::pair<std::vector<double>, size_t> SearchEngine::searchParallelSoAOuter(cons
 
 std::pair<std::vector<double>, size_t> SearchEngine::searchParallelAoSOuter(const std::vector<TimeSeries> &dataset, const TimeSeries &query)
 {
-    std::vector<double> sadValues(dataset.size(), std::numeric_limits<double>::max());
+    size_t numSeries = dataset.size();
     size_t queryLength = query.getSize();
+    const auto &queryData = query.getData();
 
+    std::vector<double> sadValues(numSeries, std::numeric_limits<double>::max());
     size_t bestIndex = 0;
     double bestSad = std::numeric_limits<double>::max();
 
 #pragma omp parallel
     {
-        size_t localBestIndex = 0;
         double localBestSad = std::numeric_limits<double>::max();
-        const auto &queryData = query.getData();
+        size_t localBestIndex = 0;
 
-        // si utilizza schedule(dynamic) perchè in aos si possono avere oggetti di lunghezza molto diversa quindi può variare il tempo di iterazione e quindi è meglio usare dynamic
-#pragma omp for nowait schedule(dynamic)
-        for (size_t i = 0; i < dataset.size(); ++i)
+#pragma omp for schedule(dynamic)
+        for (size_t i = 0; i < numSeries; ++i)
         {
-            const TimeSeries &timeseries = dataset[i];
-            size_t seriesLength = timeseries.getSize();
+            const auto &timeseries = dataset[i];
             const auto &seriesData = timeseries.getData();
-
-            if (seriesLength < queryLength)
-            {
-                continue;
-            }
+            size_t seriesLength = timeseries.getSize();
 
             double minSad = std::numeric_limits<double>::max();
 
-            if (seriesLength == queryLength)
+            for (size_t j = 0; j <= seriesLength - queryLength; ++j)
             {
                 double sad = 0.0;
+
 #pragma omp simd reduction(+ : sad)
                 for (size_t k = 0; k < queryLength; ++k)
-                {
-                    sad += std::abs(seriesData[k] - queryData[k]);
-                }
-                minSad = sad;
-            }
-            else
-            {
-                for (size_t j = 0; j <= seriesLength - queryLength; ++j)
-                {
-                    double sad = 0.0;
-#pragma omp simd reduction(+ : sad)
-                    for (size_t k = 0; k < queryLength; ++k)
-                    {
-                        sad += std::abs(seriesData[j + k] - queryData[k]);
-                    }
-                    if (sad < minSad)
-                    {
-                        minSad = sad;
-                    }
-                }
+                    sad += std::abs(seriesData[j + k] - queryData[k]);
+
+                if (sad < minSad)
+                    minSad = sad;
             }
 
             sadValues[i] = minSad;
@@ -280,75 +199,39 @@ std::pair<std::vector<double>, size_t> SearchEngine::searchParallelAoSOuter(cons
 
 std::pair<std::vector<double>, size_t> SearchEngine::searchParallelSoAInner(const TimeSeriesDataset &dataset, const TimeSeries &query)
 {
-    std::vector<double> sadValues(dataset.getNumSeries(), std::numeric_limits<double>::max());
+    size_t numSeries = dataset.getNumSeries();
     size_t queryLength = query.getSize();
-
-    size_t bestIndex = 0;
-    double bestSad = std::numeric_limits<double>::max();
     const auto &queryData = query.getData();
 
+    std::vector<double> sadValues(numSeries, std::numeric_limits<double>::max());
+    size_t bestIndex = 0;
+    double bestSad = std::numeric_limits<double>::max();
+
+    for (size_t i = 0; i < numSeries; ++i)
     {
-        size_t localBestIndex = 0;
-        double localBestSad = std::numeric_limits<double>::max();
-        std::vector<double> localQueryData = queryData;
+        const auto &series = dataset.getSeries(i);
+        size_t seriesLength = series.size();
 
-        for (size_t i = 0; i < dataset.getNumSeries(); ++i)
+        double minSad = std::numeric_limits<double>::max();
+
+#pragma omp parallel for reduction(min : minSad) schedule(static)
+        for (size_t j = 0; j <= seriesLength - queryLength; ++j)
         {
-            const std::vector<double> &series = dataset.getSeries(i);
-            size_t seriesLength = series.size();
-
-            if (seriesLength < queryLength)
-            {
-                continue;
-            }
-
-            double minSad = std::numeric_limits<double>::max();
-
-            if (seriesLength == queryLength)
-            {
-                double sad = 0.0;
+            double sad = 0.0;
 #pragma omp simd reduction(+ : sad)
-                for (size_t k = 0; k < queryLength; ++k)
-                {
-                    sad += std::abs(series[k] - localQueryData[k]);
-                }
+            for (size_t k = 0; k < queryLength; ++k)
+                sad += std::abs(series[j + k] - queryData[k]);
+
+            if (sad < minSad)
                 minSad = sad;
-            }
-            else
-            {
-#pragma omp parallel for reduction(min : minSad)
-                for (size_t j = 0; j <= seriesLength - queryLength; ++j)
-                {
-                    double sad = 0.0;
-#pragma omp simd reduction(+ : sad)
-                    for (size_t k = 0; k < queryLength; ++k)
-                    {
-                        sad += std::abs(series[j + k] - localQueryData[k]);
-                    }
-
-                    if (sad < minSad)
-                    {
-                        minSad = sad;
-                    }
-                }
-            }
-
-            sadValues[i] = minSad;
-
-            if (minSad < localBestSad)
-            {
-                localBestSad = minSad;
-                localBestIndex = i;
-            }
         }
 
-#pragma omp critical
+        sadValues[i] = minSad;
+
+        if (minSad < bestSad)
         {
-            if (localBestSad < bestSad)
-            {
-                bestSad = localBestSad;
-                bestIndex = localBestIndex;
-            }
+            bestSad = minSad;
+            bestIndex = i;
         }
     }
 
@@ -357,76 +240,40 @@ std::pair<std::vector<double>, size_t> SearchEngine::searchParallelSoAInner(cons
 
 std::pair<std::vector<double>, size_t> SearchEngine::searchParallelAoSInner(const std::vector<TimeSeries> &dataset, const TimeSeries &query)
 {
-    std::vector<double> sadValues(dataset.size(), std::numeric_limits<double>::max());
+    size_t numSeries = dataset.size();
     size_t queryLength = query.getSize();
-
-    size_t bestIndex = 0;
-    double bestSad = std::numeric_limits<double>::max();
     const auto &queryData = query.getData();
 
+    std::vector<double> sadValues(numSeries, std::numeric_limits<double>::max());
+    size_t bestIndex = 0;
+    double bestSad = std::numeric_limits<double>::max();
+
+    for (size_t i = 0; i < numSeries; ++i)
     {
-        size_t localBestIndex = 0;
-        double localBestSad = std::numeric_limits<double>::max();
-        std::vector<double> localQueryData = queryData;
+        const auto &timeseries = dataset[i];
+        const auto &seriesData = timeseries.getData();
+        size_t seriesLength = timeseries.getSize();
 
-        for (size_t i = 0; i < dataset.size(); ++i)
+        double minSad = std::numeric_limits<double>::max();
+
+#pragma omp parallel for reduction(min : minSad) schedule(static)
+        for (size_t j = 0; j <= seriesLength - queryLength; ++j)
         {
-            const TimeSeries &timeseries = dataset[i];
-            const auto &seriesData = timeseries.getData();
-            size_t seriesLength = timeseries.getSize();
-
-            if (seriesLength < queryLength)
-            {
-                continue;
-            }
-
-            double minSad = std::numeric_limits<double>::max();
-
-            if (seriesLength == queryLength)
-            {
-                double sad = 0.0;
+            double sad = 0.0;
 #pragma omp simd reduction(+ : sad)
-                for (size_t k = 0; k < queryLength; ++k)
-                {
-                    sad += std::abs(seriesData[k] - localQueryData[k]);
-                }
+            for (size_t k = 0; k < queryLength; ++k)
+                sad += std::abs(seriesData[j + k] - queryData[k]);
+
+            if (sad < minSad)
                 minSad = sad;
-            }
-            else
-            {
-#pragma omp parallel for reduction(min : minSad)
-                for (size_t j = 0; j <= seriesLength - queryLength; ++j)
-                {
-                    double sad = 0.0;
-#pragma omp simd reduction(+ : sad)
-                    for (size_t k = 0; k < queryLength; ++k)
-                    {
-                        sad += std::abs(seriesData[j + k] - localQueryData[k]);
-                    }
-
-                    if (sad < minSad)
-                    {
-                        minSad = sad;
-                    }
-                }
-            }
-
-            sadValues[i] = minSad;
-
-            if (minSad < localBestSad)
-            {
-                localBestSad = minSad;
-                localBestIndex = i;
-            }
         }
 
-#pragma omp critical
+        sadValues[i] = minSad;
+
+        if (minSad < bestSad)
         {
-            if (localBestSad < bestSad)
-            {
-                bestSad = localBestSad;
-                bestIndex = localBestIndex;
-            }
+            bestSad = minSad;
+            bestIndex = i;
         }
     }
 
