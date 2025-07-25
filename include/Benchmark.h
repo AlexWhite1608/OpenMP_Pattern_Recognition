@@ -35,6 +35,7 @@ struct TestConfiguration
     int series_length;
     int query_length;
     int num_runs = 10;  
+    std::vector<int> thread_counts;
     std::string dataset_path;
     std::string query_path;
 };
