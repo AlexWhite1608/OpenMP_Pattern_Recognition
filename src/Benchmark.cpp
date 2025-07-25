@@ -8,27 +8,35 @@
 #include <numeric>
 #include <algorithm>
 
-namespace {
+namespace
+{
     // Calcola la media
-    double calculate_mean(const std::vector<double>& values) {
-        if (values.empty()) return 0.0;
+    double calculate_mean(const std::vector<double> &values)
+    {
+        if (values.empty())
+            return 0.0;
         return std::accumulate(values.begin(), values.end(), 0.0) / values.size();
     }
 
     // Calcola la deviazione standard
-    double calculate_std_deviation(const std::vector<double>& values, double mean) {
-        if (values.size() <= 1) return 0.0;
+    double calculate_std_deviation(const std::vector<double> &values, double mean)
+    {
+        if (values.size() <= 1)
+            return 0.0;
         double variance = 0.0;
-        for (double value : values) {
+        for (double value : values)
+        {
             variance += (value - mean) * (value - mean);
         }
-        variance /= (values.size() - 1); 
+        variance /= (values.size() - 1);
         return std::sqrt(variance);
     }
 
     // Riempie le statistiche nel BenchmarkResult
-    void fill_statistics(BenchmarkResult& result) {
-        if (result.execution_times_ms.empty()) return;
+    void fill_statistics(BenchmarkResult &result)
+    {
+        if (result.execution_times_ms.empty())
+            return;
 
         result.mean_execution_time_ms = calculate_mean(result.execution_times_ms);
         result.std_deviation_ms = calculate_std_deviation(result.execution_times_ms, result.mean_execution_time_ms);
@@ -49,22 +57,24 @@ BenchmarkResult Benchmark::benchmarkSequentialSoA(const TimeSeriesDataset &datas
 
     std::cout << "  Running " << num_runs << " iterations for Sequential SoA..." << std::flush;
 
-    for (int run = 0; run < num_runs; ++run) {
+    for (int run = 0; run < num_runs; ++run)
+    {
         auto start = std::chrono::high_resolution_clock::now();
-        
+
         auto [currentSadValues, currentBestIndex] = SearchEngine::searchSequentialSoA(dataset, query);
-        
+
         auto end = std::chrono::high_resolution_clock::now();
         auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
-        
+
         execution_times.push_back(duration.count() / 1000.0);
-        
+
         // usa prima run per il valore ottimo
-        if (run == 0) {
+        if (run == 0)
+        {
             sadValues = currentSadValues;
             bestIndex = currentBestIndex;
         }
-        
+
         std::cout << "." << std::flush;
     }
     std::cout << " Done" << std::endl;
@@ -83,10 +93,10 @@ BenchmarkResult Benchmark::benchmarkSequentialSoA(const TimeSeriesDataset &datas
     return result;
 }
 
-BenchmarkResult Benchmark::benchmarkSoA_parallelOuter(const TimeSeriesDataset &dataset, 
-                                                     const TimeSeries &query, 
-                                                     const std::string &test_name,
-                                                     int num_runs)
+BenchmarkResult Benchmark::benchmarkSoA_parallelOuter(const TimeSeriesDataset &dataset,
+                                                      const TimeSeries &query,
+                                                      const std::string &test_name,
+                                                      int num_runs)
 {
     std::vector<double> execution_times;
     std::vector<double> sadValues;
@@ -94,21 +104,23 @@ BenchmarkResult Benchmark::benchmarkSoA_parallelOuter(const TimeSeriesDataset &d
 
     std::cout << "  Running " << num_runs << " iterations for Parallel SoA Outer..." << std::flush;
 
-    for (int run = 0; run < num_runs; ++run) {
+    for (int run = 0; run < num_runs; ++run)
+    {
         auto start = std::chrono::high_resolution_clock::now();
-        
+
         auto [currentSadValues, currentBestIndex] = SearchEngine::searchParallelSoAOuter(dataset, query);
-        
+
         auto end = std::chrono::high_resolution_clock::now();
         auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
-        
+
         execution_times.push_back(duration.count() / 1000.0);
-        
-        if (run == 0) {
+
+        if (run == 0)
+        {
             sadValues = currentSadValues;
             bestIndex = currentBestIndex;
         }
-        
+
         std::cout << "." << std::flush;
     }
     std::cout << " Done" << std::endl;
@@ -127,10 +139,10 @@ BenchmarkResult Benchmark::benchmarkSoA_parallelOuter(const TimeSeriesDataset &d
     return result;
 }
 
-BenchmarkResult Benchmark::benchmarkSoA_parallelInner(const TimeSeriesDataset &dataset, 
-                                                     const TimeSeries &query, 
-                                                     const std::string &test_name,
-                                                     int num_runs)
+BenchmarkResult Benchmark::benchmarkSoA_parallelInner(const TimeSeriesDataset &dataset,
+                                                      const TimeSeries &query,
+                                                      const std::string &test_name,
+                                                      int num_runs)
 {
     std::vector<double> execution_times;
     std::vector<double> sadValues;
@@ -138,21 +150,23 @@ BenchmarkResult Benchmark::benchmarkSoA_parallelInner(const TimeSeriesDataset &d
 
     std::cout << "  Running " << num_runs << " iterations for Parallel SoA Inner..." << std::flush;
 
-    for (int run = 0; run < num_runs; ++run) {
+    for (int run = 0; run < num_runs; ++run)
+    {
         auto start = std::chrono::high_resolution_clock::now();
-        
+
         auto [currentSadValues, currentBestIndex] = SearchEngine::searchParallelSoAInner(dataset, query);
-        
+
         auto end = std::chrono::high_resolution_clock::now();
         auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
-        
+
         execution_times.push_back(duration.count() / 1000.0);
-        
-        if (run == 0) {
+
+        if (run == 0)
+        {
             sadValues = currentSadValues;
             bestIndex = currentBestIndex;
         }
-        
+
         std::cout << "." << std::flush;
     }
     std::cout << " Done" << std::endl;
@@ -182,21 +196,23 @@ BenchmarkResult Benchmark::benchmarkSequentialAoS(const std::vector<TimeSeries> 
 
     std::cout << "  Running " << num_runs << " iterations for Sequential AoS..." << std::flush;
 
-    for (int run = 0; run < num_runs; ++run) {
+    for (int run = 0; run < num_runs; ++run)
+    {
         auto start = std::chrono::high_resolution_clock::now();
-        
+
         auto [currentSadValues, currentBestIndex] = SearchEngine::searchSequentialAoS(dataset, query);
-        
+
         auto end = std::chrono::high_resolution_clock::now();
         auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
-        
+
         execution_times.push_back(duration.count() / 1000.0);
-        
-        if (run == 0) {
+
+        if (run == 0)
+        {
             sadValues = currentSadValues;
             bestIndex = currentBestIndex;
         }
-        
+
         std::cout << "." << std::flush;
     }
     std::cout << " Done" << std::endl;
@@ -215,10 +231,10 @@ BenchmarkResult Benchmark::benchmarkSequentialAoS(const std::vector<TimeSeries> 
     return result;
 }
 
-BenchmarkResult Benchmark::benchmarkAoS_parallelOuter(const std::vector<TimeSeries> &dataset, 
-                                                     const TimeSeries &query, 
-                                                     const std::string &test_name,
-                                                     int num_runs)
+BenchmarkResult Benchmark::benchmarkAoS_parallelOuter(const std::vector<TimeSeries> &dataset,
+                                                      const TimeSeries &query,
+                                                      const std::string &test_name,
+                                                      int num_runs)
 {
     std::vector<double> execution_times;
     std::vector<double> sadValues;
@@ -226,21 +242,23 @@ BenchmarkResult Benchmark::benchmarkAoS_parallelOuter(const std::vector<TimeSeri
 
     std::cout << "  Running " << num_runs << " iterations for Parallel AoS Outer..." << std::flush;
 
-    for (int run = 0; run < num_runs; ++run) {
+    for (int run = 0; run < num_runs; ++run)
+    {
         auto start = std::chrono::high_resolution_clock::now();
-        
+
         auto [currentSadValues, currentBestIndex] = SearchEngine::searchParallelAoSOuter(dataset, query);
-        
+
         auto end = std::chrono::high_resolution_clock::now();
         auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
-        
+
         execution_times.push_back(duration.count() / 1000.0);
-        
-        if (run == 0) {
+
+        if (run == 0)
+        {
             sadValues = currentSadValues;
             bestIndex = currentBestIndex;
         }
-        
+
         std::cout << "." << std::flush;
     }
     std::cout << " Done" << std::endl;
@@ -259,10 +277,10 @@ BenchmarkResult Benchmark::benchmarkAoS_parallelOuter(const std::vector<TimeSeri
     return result;
 }
 
-BenchmarkResult Benchmark::benchmarkAoS_parallelInner(const std::vector<TimeSeries> &dataset, 
-                                                     const TimeSeries &query, 
-                                                     const std::string &test_name,
-                                                     int num_runs)
+BenchmarkResult Benchmark::benchmarkAoS_parallelInner(const std::vector<TimeSeries> &dataset,
+                                                      const TimeSeries &query,
+                                                      const std::string &test_name,
+                                                      int num_runs)
 {
     std::vector<double> execution_times;
     std::vector<double> sadValues;
@@ -270,21 +288,23 @@ BenchmarkResult Benchmark::benchmarkAoS_parallelInner(const std::vector<TimeSeri
 
     std::cout << "  Running " << num_runs << " iterations for Parallel AoS Inner..." << std::flush;
 
-    for (int run = 0; run < num_runs; ++run) {
+    for (int run = 0; run < num_runs; ++run)
+    {
         auto start = std::chrono::high_resolution_clock::now();
-        
+
         auto [currentSadValues, currentBestIndex] = SearchEngine::searchParallelAoSInner(dataset, query);
-        
+
         auto end = std::chrono::high_resolution_clock::now();
         auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
-        
+
         execution_times.push_back(duration.count() / 1000.0);
-        
-        if (run == 0) {
+
+        if (run == 0)
+        {
             sadValues = currentSadValues;
             bestIndex = currentBestIndex;
         }
-        
+
         std::cout << "." << std::flush;
     }
     std::cout << " Done" << std::endl;
@@ -308,6 +328,23 @@ bool Benchmark::generateDataset(const TestConfiguration &config)
     std::filesystem::create_directories("src/utils/data/timeseries");
     std::filesystem::create_directories("src/utils/data/query");
 
+    std::string dataset_filename = "src/utils/data/timeseries/timeseries_" +
+                                   std::to_string(config.num_series) + "_" +
+                                   std::to_string(config.series_length) + "_" +
+                                   std::to_string(config.query_length) + ".csv";
+
+    std::string query_filename = "src/utils/data/query/query_" +
+                                 std::to_string(config.num_series) + "_" +
+                                 std::to_string(config.series_length) + "_" +
+                                 std::to_string(config.query_length) + ".csv";
+
+    // controlla se i file esistono già
+    if (std::filesystem::exists(dataset_filename) && std::filesystem::exists(query_filename))
+    {
+        std::cout << "Dataset already exists: " << dataset_filename << " and " << query_filename << std::endl;
+        return true;
+    }
+
     // comando per lanciare script python
     std::ostringstream cmd;
     cmd << "cd src/utils && python3 generate_timeseries.py "
@@ -326,16 +363,6 @@ bool Benchmark::generateDataset(const TestConfiguration &config)
         std::cerr << "Error generating dataset" << std::endl;
         return false;
     }
-
-    std::string dataset_filename = "src/utils/data/timeseries/timeseries_" +
-                                   std::to_string(config.num_series) + "_" +
-                                   std::to_string(config.series_length) + "_" +
-                                   std::to_string(config.query_length) + ".csv";
-
-    std::string query_filename = "src/utils/data/query/query_" +
-                                 std::to_string(config.num_series) + "_" +
-                                 std::to_string(config.series_length) + "_" +
-                                 std::to_string(config.query_length) + ".csv";
 
     // verifica che i file siano creati
     if (!std::filesystem::exists(dataset_filename) ||
@@ -403,88 +430,22 @@ nlohmann::json Benchmark::run_test(const TestConfiguration &config)
         {"num_series", config.num_series},
         {"series_length", config.series_length},
         {"query_length", config.query_length},
-        {"num_runs", config.num_runs}
-    };
+        {"num_runs", config.num_runs}};
 
     // arrotonda a due decimali
-    auto round2 = [](double value) {
+    auto round2 = [](double value)
+    {
         return std::round(value * 100.0) / 100.0;
     };
 
     result["results"] = {
-        {"soa", {
-            {"sequential", {
-                {"mean_execution_time_ms", round2(resultSoA_sequential.mean_execution_time_ms)},
-                {"std_deviation_ms", round2(resultSoA_sequential.std_deviation_ms)},
-                {"min_execution_time_ms", round2(resultSoA_sequential.min_execution_time_ms)},
-                {"max_execution_time_ms", round2(resultSoA_sequential.max_execution_time_ms)},
-                {"best_match_index", resultSoA_sequential.best_match_index},
-                {"best_sad_value", resultSoA_sequential.best_sad_value},
-                {"all_execution_times", resultSoA_sequential.execution_times_ms}
-            }},
-            {"parallel_outer", {
-                {"mean_execution_time_ms", round2(resultSoA_parallelOuter.mean_execution_time_ms)},
-                {"std_deviation_ms", round2(resultSoA_parallelOuter.std_deviation_ms)},
-                {"min_execution_time_ms", round2(resultSoA_parallelOuter.min_execution_time_ms)},
-                {"max_execution_time_ms", round2(resultSoA_parallelOuter.max_execution_time_ms)},
-                {"speedup", soa_outer_speedup},
-                {"best_match_index", resultSoA_parallelOuter.best_match_index},
-                {"best_sad_value", resultSoA_parallelOuter.best_sad_value},
-                {"results_match", resultSoA_parallelOuter.best_match_index == resultSoA_sequential.best_match_index},
-                {"all_execution_times", resultSoA_parallelOuter.execution_times_ms}
-            }},
-            {"parallel_inner", {
-                {"mean_execution_time_ms", round2(resultSoA_parallelInner.mean_execution_time_ms)},
-                {"std_deviation_ms", round2(resultSoA_parallelInner.std_deviation_ms)},
-                {"min_execution_time_ms", round2(resultSoA_parallelInner.min_execution_time_ms)},
-                {"max_execution_time_ms", round2(resultSoA_parallelInner.max_execution_time_ms)},
-                {"speedup", soa_inner_speedup},
-                {"best_match_index", resultSoA_parallelInner.best_match_index},
-                {"best_sad_value", resultSoA_parallelInner.best_sad_value},
-                {"results_match", resultSoA_parallelInner.best_match_index == resultSoA_sequential.best_match_index},
-                {"all_execution_times", resultSoA_parallelInner.execution_times_ms}
-            }}
-        }},
-        {"aos", {
-            {"sequential", {
-                {"mean_execution_time_ms", round2(resultAoS_sequential.mean_execution_time_ms)},
-                {"std_deviation_ms", round2(resultAoS_sequential.std_deviation_ms)},
-                {"min_execution_time_ms", round2(resultAoS_sequential.min_execution_time_ms)},
-                {"max_execution_time_ms", round2(resultAoS_sequential.max_execution_time_ms)},
-                {"best_match_index", resultAoS_sequential.best_match_index},
-                {"best_sad_value", resultAoS_sequential.best_sad_value},
-                {"all_execution_times", resultAoS_sequential.execution_times_ms}
-            }},
-            {"parallel_outer", {
-                {"mean_execution_time_ms", round2(resultAoS_parallelOuter.mean_execution_time_ms)},
-                {"std_deviation_ms", round2(resultAoS_parallelOuter.std_deviation_ms)},
-                {"min_execution_time_ms", round2(resultAoS_parallelOuter.min_execution_time_ms)},
-                {"max_execution_time_ms", round2(resultAoS_parallelOuter.max_execution_time_ms)},
-                {"speedup", aos_outer_speedup},
-                {"best_match_index", resultAoS_parallelOuter.best_match_index},
-                {"best_sad_value", resultAoS_parallelOuter.best_sad_value},
-                {"results_match", resultAoS_parallelOuter.best_match_index == resultAoS_sequential.best_match_index},
-                {"all_execution_times", resultAoS_parallelOuter.execution_times_ms}
-            }},
-            {"parallel_inner", {
-                {"mean_execution_time_ms", round2(resultAoS_parallelInner.mean_execution_time_ms)},
-                {"std_deviation_ms", round2(resultAoS_parallelInner.std_deviation_ms)},
-                {"min_execution_time_ms", round2(resultAoS_parallelInner.min_execution_time_ms)},
-                {"max_execution_time_ms", round2(resultAoS_parallelInner.max_execution_time_ms)},
-                {"speedup", aos_inner_speedup},
-                {"best_match_index", resultAoS_parallelInner.best_match_index},
-                {"best_sad_value", resultAoS_parallelInner.best_sad_value},
-                {"results_match", resultAoS_parallelInner.best_match_index == resultAoS_sequential.best_match_index},
-                {"all_execution_times", resultAoS_parallelInner.execution_times_ms}
-            }}
-        }}
-    };
+        {"soa", {{"sequential", {{"mean_execution_time_ms", round2(resultSoA_sequential.mean_execution_time_ms)}, {"std_deviation_ms", round2(resultSoA_sequential.std_deviation_ms)}, {"min_execution_time_ms", round2(resultSoA_sequential.min_execution_time_ms)}, {"max_execution_time_ms", round2(resultSoA_sequential.max_execution_time_ms)}, {"best_match_index", resultSoA_sequential.best_match_index}, {"best_sad_value", resultSoA_sequential.best_sad_value}, {"all_execution_times", resultSoA_sequential.execution_times_ms}}}, {"parallel_outer", {{"mean_execution_time_ms", round2(resultSoA_parallelOuter.mean_execution_time_ms)}, {"std_deviation_ms", round2(resultSoA_parallelOuter.std_deviation_ms)}, {"min_execution_time_ms", round2(resultSoA_parallelOuter.min_execution_time_ms)}, {"max_execution_time_ms", round2(resultSoA_parallelOuter.max_execution_time_ms)}, {"speedup", soa_outer_speedup}, {"best_match_index", resultSoA_parallelOuter.best_match_index}, {"best_sad_value", resultSoA_parallelOuter.best_sad_value}, {"results_match", resultSoA_parallelOuter.best_match_index == resultSoA_sequential.best_match_index}, {"all_execution_times", resultSoA_parallelOuter.execution_times_ms}}}, {"parallel_inner", {{"mean_execution_time_ms", round2(resultSoA_parallelInner.mean_execution_time_ms)}, {"std_deviation_ms", round2(resultSoA_parallelInner.std_deviation_ms)}, {"min_execution_time_ms", round2(resultSoA_parallelInner.min_execution_time_ms)}, {"max_execution_time_ms", round2(resultSoA_parallelInner.max_execution_time_ms)}, {"speedup", soa_inner_speedup}, {"best_match_index", resultSoA_parallelInner.best_match_index}, {"best_sad_value", resultSoA_parallelInner.best_sad_value}, {"results_match", resultSoA_parallelInner.best_match_index == resultSoA_sequential.best_match_index}, {"all_execution_times", resultSoA_parallelInner.execution_times_ms}}}}},
+        {"aos", {{"sequential", {{"mean_execution_time_ms", round2(resultAoS_sequential.mean_execution_time_ms)}, {"std_deviation_ms", round2(resultAoS_sequential.std_deviation_ms)}, {"min_execution_time_ms", round2(resultAoS_sequential.min_execution_time_ms)}, {"max_execution_time_ms", round2(resultAoS_sequential.max_execution_time_ms)}, {"best_match_index", resultAoS_sequential.best_match_index}, {"best_sad_value", resultAoS_sequential.best_sad_value}, {"all_execution_times", resultAoS_sequential.execution_times_ms}}}, {"parallel_outer", {{"mean_execution_time_ms", round2(resultAoS_parallelOuter.mean_execution_time_ms)}, {"std_deviation_ms", round2(resultAoS_parallelOuter.std_deviation_ms)}, {"min_execution_time_ms", round2(resultAoS_parallelOuter.min_execution_time_ms)}, {"max_execution_time_ms", round2(resultAoS_parallelOuter.max_execution_time_ms)}, {"speedup", aos_outer_speedup}, {"best_match_index", resultAoS_parallelOuter.best_match_index}, {"best_sad_value", resultAoS_parallelOuter.best_sad_value}, {"results_match", resultAoS_parallelOuter.best_match_index == resultAoS_sequential.best_match_index}, {"all_execution_times", resultAoS_parallelOuter.execution_times_ms}}}, {"parallel_inner", {{"mean_execution_time_ms", round2(resultAoS_parallelInner.mean_execution_time_ms)}, {"std_deviation_ms", round2(resultAoS_parallelInner.std_deviation_ms)}, {"min_execution_time_ms", round2(resultAoS_parallelInner.min_execution_time_ms)}, {"max_execution_time_ms", round2(resultAoS_parallelInner.max_execution_time_ms)}, {"speedup", aos_inner_speedup}, {"best_match_index", resultAoS_parallelInner.best_match_index}, {"best_sad_value", resultAoS_parallelInner.best_sad_value}, {"results_match", resultAoS_parallelInner.best_match_index == resultAoS_sequential.best_match_index}, {"all_execution_times", resultAoS_parallelInner.execution_times_ms}}}}}};
 
     result["analysis"] = {
         {"soa_vs_aos_sequential", soa_vs_aos_sequential},
         {"soa_vs_aos_parallel_outer", soa_vs_aos_parallel_outer},
-        {"soa_vs_aos_parallel_inner", soa_vs_aos_parallel_inner}
-    };
+        {"soa_vs_aos_parallel_inner", soa_vs_aos_parallel_inner}};
 
     return result;
 }
