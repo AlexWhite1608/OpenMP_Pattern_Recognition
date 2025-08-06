@@ -10,7 +10,7 @@ int main()
 {
     const int NUM_RUNS = 10;
 
-    std::vector<int> thread_counts = {1, 2, 4, 8, 16, 32};
+    std::vector<int> thread_counts = {1, 2, 4, 8, 16};
 
     std::vector<TestConfiguration> configurations;
 
@@ -20,10 +20,9 @@ int main()
         {1000, 100, 50},
         {2000, 200, 50},
 
-        // // Casi estremi per inner parallelization (poche serie lunghe)
+        // Casi estremi per inner parallelization (poche serie lunghe)
         {10, 50000, 50},
         {5, 100000, 50},
-
     };
 
     for (const auto &[num_series, series_length, query_length] : test_cases)
@@ -65,86 +64,161 @@ int main()
             continue;
         }
 
+        std::cout << "\n"
+                  << std::string(60, '=') << std::endl;
         std::cout << "Test: " << test["test_name"] << std::endl;
-        std::cout << "Configuration: " << test["configuration"]["num_series"] << " series × "
+        std::cout << "Config: " << test["configuration"]["num_series"] << " series × "
                   << test["configuration"]["series_length"] << " points" << std::endl;
+        std::cout << std::string(60, '-') << std::endl;
 
-        if (test.contains("thread_results") && test["thread_results"].contains("1"))
+        // Ottieni baseline sequenziali (1 thread)
+        double soa_sequential = 0.0, aos_sequential = 0.0;
+        if (test["thread_results"].contains("1"))
         {
-            const auto &single_thread = test["thread_results"]["1"];
+            const auto &baseline = test["thread_results"]["1"];
+            if (baseline.contains("soa") && baseline["soa"].contains("sequential"))
+                soa_sequential = baseline["soa"]["sequential"]["mean_execution_time_ms"];
+            if (baseline.contains("aos") && baseline["aos"].contains("sequential"))
+                aos_sequential = baseline["aos"]["sequential"]["mean_execution_time_ms"];
+        }
 
-            std::cout << "  SoA Results (avg of " << test["configuration"]["num_runs"] << " runs):" << std::endl;
+        // Stampa baseline sequenziali
+        std::cout << "SEQUENTIAL:" << std::endl;
+        std::cout << "  SoA: " << std::fixed << std::setprecision(1) << soa_sequential << " ms" << std::endl;
+        std::cout << "  AoS: " << std::fixed << std::setprecision(1) << aos_sequential << " ms" << std::endl;
 
-            if (single_thread.contains("soa") && single_thread["soa"].contains("sequential"))
+        if (soa_sequential > 0 && aos_sequential > 0)
+        {
+            double advantage = aos_sequential / soa_sequential;
+            std::cout << "  → SoA is " << std::setprecision(2) << advantage << "x faster" << std::endl;
+        }
+        std::cout << std::endl;
+
+        // Trova i migliori risultati paralleli per ogni thread count
+        std::cout << "PARALLEL RESULTS:" << std::endl;
+        std::cout << std::left << std::setw(8) << "Threads"
+                  << std::setw(15) << "SoA Best (ms)"
+                  << std::setw(12) << "Speedup"
+                  << std::setw(15) << "AoS Best (ms)"
+                  << std::setw(12) << "Speedup" << std::endl;
+        std::cout << std::string(62, '-') << std::endl;
+
+        for (const auto &[thread_count_str, thread_data] : test["thread_results"].items())
+        {
+            int threads = std::stoi(thread_count_str);
+            if (threads == 1)
+                continue; // Skip sequential già mostrato
+
+            // Trova il migliore SoA (outer vs inner)
+            double soa_best_time = 99999.0;
+            double soa_best_speedup = 1.0;
+
+            if (thread_data.contains("soa"))
             {
-                const auto &soa_seq = single_thread["soa"]["sequential"];
-                std::cout << "    Sequential: " << soa_seq["mean_execution_time_ms"]
-                          << " ± " << soa_seq["std_deviation_ms"] << " ms" << std::endl;
-            }
-
-            // Per parallel outer/inner, usa i risultati con più thread (es. 16)
-            if (test["thread_results"].contains("16"))
-            {
-                const auto &multi_thread = test["thread_results"]["16"];
-
-                if (multi_thread.contains("soa") && multi_thread["soa"].contains("parallel_outer"))
+                if (thread_data["soa"].contains("parallel_outer"))
                 {
-                    const auto &soa_outer = multi_thread["soa"]["parallel_outer"];
-                    std::cout << "    Parallel Outer (16 threads): " << soa_outer["mean_execution_time_ms"]
-                              << " ± " << soa_outer["std_deviation_ms"] << " ms"
-                              << " (speedup: " << soa_outer["speedup"] << "x)" << std::endl;
+                    double time = thread_data["soa"]["parallel_outer"]["mean_execution_time_ms"];
+                    double speedup = thread_data["soa"]["parallel_outer"]["speedup"];
+                    if (time < soa_best_time)
+                    {
+                        soa_best_time = time;
+                        soa_best_speedup = speedup;
+                    }
                 }
-
-                if (multi_thread.contains("soa") && multi_thread["soa"].contains("parallel_inner"))
+                if (thread_data["soa"].contains("parallel_inner"))
                 {
-                    const auto &soa_inner = multi_thread["soa"]["parallel_inner"];
-                    std::cout << "    Parallel Inner (16 threads): " << soa_inner["mean_execution_time_ms"]
-                              << " ± " << soa_inner["std_deviation_ms"] << " ms"
-                              << " (speedup: " << soa_inner["speedup"] << "x)" << std::endl;
-                }
-            }
-
-            // AoS Results
-            std::cout << "  AoS Results (avg of " << test["configuration"]["num_runs"] << " runs):" << std::endl;
-
-            if (single_thread.contains("aos") && single_thread["aos"].contains("sequential"))
-            {
-                const auto &aos_seq = single_thread["aos"]["sequential"];
-                std::cout << "    Sequential: " << aos_seq["mean_execution_time_ms"]
-                          << " ± " << aos_seq["std_deviation_ms"] << " ms" << std::endl;
-            }
-
-            if (test["thread_results"].contains("16"))
-            {
-                const auto &multi_thread = test["thread_results"]["16"];
-
-                if (multi_thread.contains("aos") && multi_thread["aos"].contains("parallel_outer"))
-                {
-                    const auto &aos_outer = multi_thread["aos"]["parallel_outer"];
-                    std::cout << "    Parallel Outer (16 threads): " << aos_outer["mean_execution_time_ms"]
-                              << " ± " << aos_outer["std_deviation_ms"] << " ms"
-                              << " (speedup: " << aos_outer["speedup"] << "x)" << std::endl;
-                }
-
-                if (multi_thread.contains("aos") && multi_thread["aos"].contains("parallel_inner"))
-                {
-                    const auto &aos_inner = multi_thread["aos"]["parallel_inner"];
-                    std::cout << "    Parallel Inner (16 threads): " << aos_inner["mean_execution_time_ms"]
-                              << " ± " << aos_inner["std_deviation_ms"] << " ms"
-                              << " (speedup: " << aos_inner["speedup"] << "x)" << std::endl;
+                    double time = thread_data["soa"]["parallel_inner"]["mean_execution_time_ms"];
+                    double speedup = thread_data["soa"]["parallel_inner"]["speedup"];
+                    if (time < soa_best_time)
+                    {
+                        soa_best_time = time;
+                        soa_best_speedup = speedup;
+                    }
                 }
             }
 
-            // Analysis
-            if (single_thread.contains("analysis") && single_thread["analysis"].contains("soa_vs_aos_sequential"))
+            // Trova il migliore AoS (outer vs inner)
+            double aos_best_time = 99999.0;
+            double aos_best_speedup = 1.0;
+
+            if (thread_data.contains("aos"))
             {
-                std::cout << "  Analysis:" << std::endl;
-                std::cout << "    SoA vs AoS (Sequential): " << single_thread["analysis"]["soa_vs_aos_sequential"] << "x" << std::endl;
+                if (thread_data["aos"].contains("parallel_outer"))
+                {
+                    double time = thread_data["aos"]["parallel_outer"]["mean_execution_time_ms"];
+                    double speedup = thread_data["aos"]["parallel_outer"]["speedup"];
+                    if (time < aos_best_time)
+                    {
+                        aos_best_time = time;
+                        aos_best_speedup = speedup;
+                    }
+                }
+                if (thread_data["aos"].contains("parallel_inner"))
+                {
+                    double time = thread_data["aos"]["parallel_inner"]["mean_execution_time_ms"];
+                    double speedup = thread_data["aos"]["parallel_inner"]["speedup"];
+                    if (time < aos_best_time)
+                    {
+                        aos_best_time = time;
+                        aos_best_speedup = speedup;
+                    }
+                }
+            }
+
+            // Stampa risultati con formattazione corretta
+            std::cout << std::left
+                      << std::setw(8) << threads
+                      << std::setw(15) << std::fixed << std::setprecision(1) << soa_best_time
+                      << std::setw(12) << std::setprecision(2) << soa_best_speedup
+                      << std::setw(15) << std::setprecision(1) << aos_best_time
+                      << std::setw(12) << std::setprecision(2) << aos_best_speedup << std::endl;
+        }
+
+        // Trova il migliore assoluto
+        double best_speedup = 1.0;
+        int best_threads = 1;
+        std::string best_type = "Sequential";
+
+        for (const auto &[thread_count_str, thread_data] : test["thread_results"].items())
+        {
+            int threads = std::stoi(thread_count_str);
+            if (threads == 1)
+                continue;
+
+            std::vector<std::pair<std::string, double>> candidates = {
+                {"SoA-Outer", 0}, {"SoA-Inner", 0}, {"AoS-Outer", 0}, {"AoS-Inner", 0}};
+
+            if (thread_data.contains("soa"))
+            {
+                if (thread_data["soa"].contains("parallel_outer"))
+                    candidates[0].second = thread_data["soa"]["parallel_outer"]["speedup"];
+                if (thread_data["soa"].contains("parallel_inner"))
+                    candidates[1].second = thread_data["soa"]["parallel_inner"]["speedup"];
+            }
+            if (thread_data.contains("aos"))
+            {
+                if (thread_data["aos"].contains("parallel_outer"))
+                    candidates[2].second = thread_data["aos"]["parallel_outer"]["speedup"];
+                if (thread_data["aos"].contains("parallel_inner"))
+                    candidates[3].second = thread_data["aos"]["parallel_inner"]["speedup"];
+            }
+
+            for (const auto &[type, speedup] : candidates)
+            {
+                if (speedup > best_speedup)
+                {
+                    best_speedup = speedup;
+                    best_threads = threads;
+                    best_type = type;
+                }
             }
         }
 
+        std::cout << "\nBEST OVERALL: " << best_type << " with " << best_threads
+                  << " threads → " << std::fixed << std::setprecision(2) << best_speedup << "x speedup" << std::endl;
         std::cout << std::endl;
     }
 
+    std::cout << "Results saved to: " << output_filename << std::endl;
     return 0;
 }
