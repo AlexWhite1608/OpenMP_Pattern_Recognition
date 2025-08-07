@@ -46,7 +46,7 @@ namespace
     }
 }
 
-BenchmarkResult Benchmark::benchmarkSequentialSoA(const TimeSeriesDataset &dataset,
+BenchmarkResult Benchmark::benchmarkSequentialSoA(const TimeSeriesSoA &dataset,
                                                   const TimeSeries &query,
                                                   const std::string &test_name,
                                                   int num_runs)
@@ -68,7 +68,6 @@ BenchmarkResult Benchmark::benchmarkSequentialSoA(const TimeSeriesDataset &datas
 
         execution_times.push_back(duration.count() / 1000.0);
 
-        // usa prima run per il valore ottimo
         if (run == 0)
         {
             sadValues = currentSadValues;
@@ -82,7 +81,7 @@ BenchmarkResult Benchmark::benchmarkSequentialSoA(const TimeSeriesDataset &datas
     BenchmarkResult result;
     result.algorithm_name = "Sequential_SoA_" + test_name;
     result.num_series = dataset.getNumSeries();
-    result.series_length = dataset.getNumSeries() > 0 ? dataset.getSeries(0).size() : 0;
+    result.series_length = dataset.getNumSeries() > 0 ? dataset.getSeriesLength(0) : 0;
     result.query_length = query.getSize();
     result.execution_times_ms = execution_times;
     result.best_match_index = bestIndex;
@@ -93,7 +92,7 @@ BenchmarkResult Benchmark::benchmarkSequentialSoA(const TimeSeriesDataset &datas
     return result;
 }
 
-BenchmarkResult Benchmark::benchmarkSoA_parallelOuter(const TimeSeriesDataset &dataset,
+BenchmarkResult Benchmark::benchmarkSoA_parallelOuter(const TimeSeriesSoA &dataset,
                                                       const TimeSeries &query,
                                                       const std::string &test_name,
                                                       int num_runs)
@@ -128,7 +127,7 @@ BenchmarkResult Benchmark::benchmarkSoA_parallelOuter(const TimeSeriesDataset &d
     BenchmarkResult result;
     result.algorithm_name = "Parallel_SoA_Outer_" + test_name;
     result.num_series = dataset.getNumSeries();
-    result.series_length = dataset.getNumSeries() > 0 ? dataset.getSeries(0).size() : 0;
+    result.series_length = dataset.getNumSeries() > 0 ? dataset.getSeriesLength(0) : 0;
     result.query_length = query.getSize();
     result.execution_times_ms = execution_times;
     result.best_match_index = bestIndex;
@@ -139,7 +138,7 @@ BenchmarkResult Benchmark::benchmarkSoA_parallelOuter(const TimeSeriesDataset &d
     return result;
 }
 
-BenchmarkResult Benchmark::benchmarkSoA_parallelInner(const TimeSeriesDataset &dataset,
+BenchmarkResult Benchmark::benchmarkSoA_parallelInner(const TimeSeriesSoA &dataset,
                                                       const TimeSeries &query,
                                                       const std::string &test_name,
                                                       int num_runs)
@@ -174,7 +173,7 @@ BenchmarkResult Benchmark::benchmarkSoA_parallelInner(const TimeSeriesDataset &d
     BenchmarkResult result;
     result.algorithm_name = "Parallel_SoA_Inner_" + test_name;
     result.num_series = dataset.getNumSeries();
-    result.series_length = dataset.getNumSeries() > 0 ? dataset.getSeries(0).size() : 0;
+    result.series_length = dataset.getNumSeries() > 0 ? dataset.getSeriesLength(0) : 0;
     result.query_length = query.getSize();
     result.execution_times_ms = execution_times;
     result.best_match_index = bestIndex;
@@ -185,7 +184,7 @@ BenchmarkResult Benchmark::benchmarkSoA_parallelInner(const TimeSeriesDataset &d
     return result;
 }
 
-BenchmarkResult Benchmark::benchmarkSequentialAoS(const std::vector<TimeSeries> &dataset,
+BenchmarkResult Benchmark::benchmarkSequentialAoS(const TimeSeriesAoS &dataset,
                                                   const TimeSeries &query,
                                                   const std::string &test_name,
                                                   int num_runs)
@@ -200,6 +199,7 @@ BenchmarkResult Benchmark::benchmarkSequentialAoS(const std::vector<TimeSeries> 
     {
         auto start = std::chrono::high_resolution_clock::now();
 
+        // CORREZIONE: Usa la funzione corretta per AoS
         auto [currentSadValues, currentBestIndex] = SearchEngine::searchSequentialAoS(dataset, query);
 
         auto end = std::chrono::high_resolution_clock::now();
@@ -219,8 +219,8 @@ BenchmarkResult Benchmark::benchmarkSequentialAoS(const std::vector<TimeSeries> 
 
     BenchmarkResult result;
     result.algorithm_name = "Sequential_AoS_" + test_name;
-    result.num_series = dataset.size();
-    result.series_length = dataset.size() > 0 ? dataset[0].getSize() : 0;
+    result.num_series = dataset.getNumSeries();
+    result.series_length = dataset.getNumSeries() > 0 ? dataset.getSeries(0).size() : 0;
     result.query_length = query.getSize();
     result.execution_times_ms = execution_times;
     result.best_match_index = bestIndex;
@@ -231,7 +231,7 @@ BenchmarkResult Benchmark::benchmarkSequentialAoS(const std::vector<TimeSeries> 
     return result;
 }
 
-BenchmarkResult Benchmark::benchmarkAoS_parallelOuter(const std::vector<TimeSeries> &dataset,
+BenchmarkResult Benchmark::benchmarkAoS_parallelOuter(const TimeSeriesAoS &dataset,
                                                       const TimeSeries &query,
                                                       const std::string &test_name,
                                                       int num_runs)
@@ -265,8 +265,8 @@ BenchmarkResult Benchmark::benchmarkAoS_parallelOuter(const std::vector<TimeSeri
 
     BenchmarkResult result;
     result.algorithm_name = "Parallel_AoS_Outer_" + test_name;
-    result.num_series = dataset.size();
-    result.series_length = dataset.size() > 0 ? dataset[0].getSize() : 0;
+    result.num_series = dataset.getNumSeries();
+    result.series_length = dataset.getNumSeries() > 0 ? dataset.getSeries(0).size() : 0;
     result.query_length = query.getSize();
     result.execution_times_ms = execution_times;
     result.best_match_index = bestIndex;
@@ -277,7 +277,7 @@ BenchmarkResult Benchmark::benchmarkAoS_parallelOuter(const std::vector<TimeSeri
     return result;
 }
 
-BenchmarkResult Benchmark::benchmarkAoS_parallelInner(const std::vector<TimeSeries> &dataset,
+BenchmarkResult Benchmark::benchmarkAoS_parallelInner(const TimeSeriesAoS &dataset,
                                                       const TimeSeries &query,
                                                       const std::string &test_name,
                                                       int num_runs)
@@ -311,8 +311,8 @@ BenchmarkResult Benchmark::benchmarkAoS_parallelInner(const std::vector<TimeSeri
 
     BenchmarkResult result;
     result.algorithm_name = "Parallel_AoS_Inner_" + test_name;
-    result.num_series = dataset.size();
-    result.series_length = dataset.size() > 0 ? dataset[0].getSize() : 0;
+    result.num_series = dataset.getNumSeries();
+    result.series_length = dataset.getNumSeries() > 0 ? dataset.getSeries(0).size() : 0;
     result.query_length = query.getSize();
     result.execution_times_ms = execution_times;
     result.best_match_index = bestIndex;
@@ -395,11 +395,19 @@ nlohmann::json Benchmark::run_test(const TestConfiguration &config)
     std::string dataset_path = "src/utils/data/timeseries/timeseries_" + test_name + ".csv";
     std::string query_path = "src/utils/data/query/query_" + test_name + ".csv";
 
-    std::vector<TimeSeries> datasetAos = loadTimeSeriesAoS(dataset_path);
-    TimeSeriesDataset datasetSoa = loadTimeSeriesDatasetSoA(dataset_path);
-    std::vector<TimeSeries> query = loadTimeSeriesAoS(query_path);
+    // CORREZIONE: Carica i dataset nei tipi corretti
+    std::vector<TimeSeries> timeSeriesList = loadTimeSeriesAoS(dataset_path);
+    TimeSeriesSoA datasetSoa = loadTimeSeriesSoA(dataset_path);
+    TimeSeries query = loadQueryFromCSV(query_path);
 
-    if (datasetAos.empty() || query.empty())
+    // CORREZIONE: Converte il vector<TimeSeries> in TimeSeriesAoS
+    TimeSeriesAoS datasetAos;
+    for (const auto& ts : timeSeriesList) {
+        datasetAos.addSeries(ts.getData());
+    }
+
+    // CORREZIONE: Controlli di validità corretti
+    if (datasetAos.getNumSeries() == 0 || query.getSize() == 0)
     {
         result["error"] = "Failed to load dataset or query";
         return result;
@@ -426,8 +434,10 @@ nlohmann::json Benchmark::run_test(const TestConfiguration &config)
     // Baseline sequenziale (eseguito una volta sola)
     omp_set_num_threads(1);
     std::cout << "Running sequential baseline for " << test_name << std::endl;
-    auto resultSoA_sequential = benchmarkSequentialSoA(datasetSoa, query[0], test_name, config.num_runs);
-    auto resultAoS_sequential = benchmarkSequentialAoS(datasetAos, query[0], test_name, config.num_runs);
+    
+    // CORREZIONE: Passa query direttamente, non query[0]
+    auto resultSoA_sequential = benchmarkSequentialSoA(datasetSoa, query, test_name, config.num_runs);
+    auto resultAoS_sequential = benchmarkSequentialAoS(datasetAos, query, test_name, config.num_runs);
 
     // Testa ogni thread count
     for (int thread_count : config.thread_counts)
@@ -442,18 +452,36 @@ nlohmann::json Benchmark::run_test(const TestConfiguration &config)
         {
             // Per 1 thread, usa i risultati sequenziali già calcolati
             thread_result["soa"] = {
-                {"sequential", {{"mean_execution_time_ms", round2(resultSoA_sequential.mean_execution_time_ms)}, {"std_deviation_ms", round2(resultSoA_sequential.std_deviation_ms)}, {"min_execution_time_ms", round2(resultSoA_sequential.min_execution_time_ms)}, {"max_execution_time_ms", round2(resultSoA_sequential.max_execution_time_ms)}, {"best_match_index", resultSoA_sequential.best_match_index}, {"best_sad_value", resultSoA_sequential.best_sad_value}, {"all_execution_times", resultSoA_sequential.execution_times_ms}}}};
+                {"sequential", {
+                    {"mean_execution_time_ms", round2(resultSoA_sequential.mean_execution_time_ms)}, 
+                    {"std_deviation_ms", round2(resultSoA_sequential.std_deviation_ms)}, 
+                    {"min_execution_time_ms", round2(resultSoA_sequential.min_execution_time_ms)}, 
+                    {"max_execution_time_ms", round2(resultSoA_sequential.max_execution_time_ms)}, 
+                    {"best_match_index", resultSoA_sequential.best_match_index}, 
+                    {"best_sad_value", resultSoA_sequential.best_sad_value}, 
+                    {"all_execution_times", resultSoA_sequential.execution_times_ms}
+                }}
+            };
 
             thread_result["aos"] = {
-                {"sequential", {{"mean_execution_time_ms", round2(resultAoS_sequential.mean_execution_time_ms)}, {"std_deviation_ms", round2(resultAoS_sequential.std_deviation_ms)}, {"min_execution_time_ms", round2(resultAoS_sequential.min_execution_time_ms)}, {"max_execution_time_ms", round2(resultAoS_sequential.max_execution_time_ms)}, {"best_match_index", resultAoS_sequential.best_match_index}, {"best_sad_value", resultAoS_sequential.best_sad_value}, {"all_execution_times", resultAoS_sequential.execution_times_ms}}}};
+                {"sequential", {
+                    {"mean_execution_time_ms", round2(resultAoS_sequential.mean_execution_time_ms)}, 
+                    {"std_deviation_ms", round2(resultAoS_sequential.std_deviation_ms)}, 
+                    {"min_execution_time_ms", round2(resultAoS_sequential.min_execution_time_ms)}, 
+                    {"max_execution_time_ms", round2(resultAoS_sequential.max_execution_time_ms)}, 
+                    {"best_match_index", resultAoS_sequential.best_match_index}, 
+                    {"best_sad_value", resultAoS_sequential.best_sad_value}, 
+                    {"all_execution_times", resultAoS_sequential.execution_times_ms}
+                }}
+            };
         }
         else
         {
-            // Per thread > 1, esegui test paralleli
-            auto resultSoA_parallelOuter = benchmarkSoA_parallelOuter(datasetSoa, query[0], test_name, config.num_runs);
-            auto resultSoA_parallelInner = benchmarkSoA_parallelInner(datasetSoa, query[0], test_name, config.num_runs);
-            auto resultAoS_parallelOuter = benchmarkAoS_parallelOuter(datasetAos, query[0], test_name, config.num_runs);
-            auto resultAoS_parallelInner = benchmarkAoS_parallelInner(datasetAos, query[0], test_name, config.num_runs);
+            // Per thread > 1, esegui test paralleli - CORREZIONE: passa query direttamente
+            auto resultSoA_parallelOuter = benchmarkSoA_parallelOuter(datasetSoa, query, test_name, config.num_runs);
+            auto resultSoA_parallelInner = benchmarkSoA_parallelInner(datasetSoa, query, test_name, config.num_runs);
+            auto resultAoS_parallelOuter = benchmarkAoS_parallelOuter(datasetAos, query, test_name, config.num_runs);
+            auto resultAoS_parallelInner = benchmarkAoS_parallelInner(datasetAos, query, test_name, config.num_runs);
 
             // Calcolo speedup e efficiency
             double soa_outer_speedup = resultSoA_sequential.mean_execution_time_ms / resultSoA_parallelOuter.mean_execution_time_ms;
@@ -467,12 +495,58 @@ nlohmann::json Benchmark::run_test(const TestConfiguration &config)
             double aos_inner_efficiency = aos_inner_speedup / thread_count;
 
             thread_result["soa"] = {
-                {"parallel_outer", {{"mean_execution_time_ms", round2(resultSoA_parallelOuter.mean_execution_time_ms)}, {"std_deviation_ms", round2(resultSoA_parallelOuter.std_deviation_ms)}, {"min_execution_time_ms", round2(resultSoA_parallelOuter.min_execution_time_ms)}, {"max_execution_time_ms", round2(resultSoA_parallelOuter.max_execution_time_ms)}, {"speedup", round2(soa_outer_speedup)}, {"efficiency", round2(soa_outer_efficiency)}, {"best_match_index", resultSoA_parallelOuter.best_match_index}, {"best_sad_value", resultSoA_parallelOuter.best_sad_value}, {"results_match", resultSoA_parallelOuter.best_match_index == resultSoA_sequential.best_match_index}, {"all_execution_times", resultSoA_parallelOuter.execution_times_ms}}},
-                {"parallel_inner", {{"mean_execution_time_ms", round2(resultSoA_parallelInner.mean_execution_time_ms)}, {"std_deviation_ms", round2(resultSoA_parallelInner.std_deviation_ms)}, {"min_execution_time_ms", round2(resultSoA_parallelInner.min_execution_time_ms)}, {"max_execution_time_ms", round2(resultSoA_parallelInner.max_execution_time_ms)}, {"speedup", round2(soa_inner_speedup)}, {"efficiency", round2(soa_inner_efficiency)}, {"best_match_index", resultSoA_parallelInner.best_match_index}, {"best_sad_value", resultSoA_parallelInner.best_sad_value}, {"results_match", resultSoA_parallelInner.best_match_index == resultSoA_sequential.best_match_index}, {"all_execution_times", resultSoA_parallelInner.execution_times_ms}}}};
+                {"parallel_outer", {
+                    {"mean_execution_time_ms", round2(resultSoA_parallelOuter.mean_execution_time_ms)}, 
+                    {"std_deviation_ms", round2(resultSoA_parallelOuter.std_deviation_ms)}, 
+                    {"min_execution_time_ms", round2(resultSoA_parallelOuter.min_execution_time_ms)}, 
+                    {"max_execution_time_ms", round2(resultSoA_parallelOuter.max_execution_time_ms)}, 
+                    {"speedup", round2(soa_outer_speedup)}, 
+                    {"efficiency", round2(soa_outer_efficiency)}, 
+                    {"best_match_index", resultSoA_parallelOuter.best_match_index}, 
+                    {"best_sad_value", resultSoA_parallelOuter.best_sad_value}, 
+                    {"results_match", resultSoA_parallelOuter.best_match_index == resultSoA_sequential.best_match_index}, 
+                    {"all_execution_times", resultSoA_parallelOuter.execution_times_ms}
+                }},
+                {"parallel_inner", {
+                    {"mean_execution_time_ms", round2(resultSoA_parallelInner.mean_execution_time_ms)}, 
+                    {"std_deviation_ms", round2(resultSoA_parallelInner.std_deviation_ms)}, 
+                    {"min_execution_time_ms", round2(resultSoA_parallelInner.min_execution_time_ms)}, 
+                    {"max_execution_time_ms", round2(resultSoA_parallelInner.max_execution_time_ms)}, 
+                    {"speedup", round2(soa_inner_speedup)}, 
+                    {"efficiency", round2(soa_inner_efficiency)}, 
+                    {"best_match_index", resultSoA_parallelInner.best_match_index}, 
+                    {"best_sad_value", resultSoA_parallelInner.best_sad_value}, 
+                    {"results_match", resultSoA_parallelInner.best_match_index == resultSoA_sequential.best_match_index}, 
+                    {"all_execution_times", resultSoA_parallelInner.execution_times_ms}
+                }}
+            };
 
             thread_result["aos"] = {
-                {"parallel_outer", {{"mean_execution_time_ms", round2(resultAoS_parallelOuter.mean_execution_time_ms)}, {"std_deviation_ms", round2(resultAoS_parallelOuter.std_deviation_ms)}, {"min_execution_time_ms", round2(resultAoS_parallelOuter.min_execution_time_ms)}, {"max_execution_time_ms", round2(resultAoS_parallelOuter.max_execution_time_ms)}, {"speedup", round2(aos_outer_speedup)}, {"efficiency", round2(aos_outer_efficiency)}, {"best_match_index", resultAoS_parallelOuter.best_match_index}, {"best_sad_value", resultAoS_parallelOuter.best_sad_value}, {"results_match", resultAoS_parallelOuter.best_match_index == resultAoS_sequential.best_match_index}, {"all_execution_times", resultAoS_parallelOuter.execution_times_ms}}},
-                {"parallel_inner", {{"mean_execution_time_ms", round2(resultAoS_parallelInner.mean_execution_time_ms)}, {"std_deviation_ms", round2(resultAoS_parallelInner.std_deviation_ms)}, {"min_execution_time_ms", round2(resultAoS_parallelInner.min_execution_time_ms)}, {"max_execution_time_ms", round2(resultAoS_parallelInner.max_execution_time_ms)}, {"speedup", round2(aos_inner_speedup)}, {"efficiency", round2(aos_inner_efficiency)}, {"best_match_index", resultAoS_parallelInner.best_match_index}, {"best_sad_value", resultAoS_parallelInner.best_sad_value}, {"results_match", resultAoS_parallelInner.best_match_index == resultAoS_sequential.best_match_index}, {"all_execution_times", resultAoS_parallelInner.execution_times_ms}}}};
+                {"parallel_outer", {
+                    {"mean_execution_time_ms", round2(resultAoS_parallelOuter.mean_execution_time_ms)}, 
+                    {"std_deviation_ms", round2(resultAoS_parallelOuter.std_deviation_ms)}, 
+                    {"min_execution_time_ms", round2(resultAoS_parallelOuter.min_execution_time_ms)}, 
+                    {"max_execution_time_ms", round2(resultAoS_parallelOuter.max_execution_time_ms)}, 
+                    {"speedup", round2(aos_outer_speedup)}, 
+                    {"efficiency", round2(aos_outer_efficiency)}, 
+                    {"best_match_index", resultAoS_parallelOuter.best_match_index}, 
+                    {"best_sad_value", resultAoS_parallelOuter.best_sad_value}, 
+                    {"results_match", resultAoS_parallelOuter.best_match_index == resultAoS_sequential.best_match_index}, 
+                    {"all_execution_times", resultAoS_parallelOuter.execution_times_ms}
+                }},
+                {"parallel_inner", {
+                    {"mean_execution_time_ms", round2(resultAoS_parallelInner.mean_execution_time_ms)}, 
+                    {"std_deviation_ms", round2(resultAoS_parallelInner.std_deviation_ms)}, 
+                    {"min_execution_time_ms", round2(resultAoS_parallelInner.min_execution_time_ms)}, 
+                    {"max_execution_time_ms", round2(resultAoS_parallelInner.max_execution_time_ms)}, 
+                    {"speedup", round2(aos_inner_speedup)}, 
+                    {"efficiency", round2(aos_inner_efficiency)}, 
+                    {"best_match_index", resultAoS_parallelInner.best_match_index}, 
+                    {"best_sad_value", resultAoS_parallelInner.best_sad_value}, 
+                    {"results_match", resultAoS_parallelInner.best_match_index == resultAoS_sequential.best_match_index}, 
+                    {"all_execution_times", resultAoS_parallelInner.execution_times_ms}
+                }}
+            };
         }
 
         // Aggiungi analisi comparative per questo thread count
@@ -486,14 +560,16 @@ nlohmann::json Benchmark::run_test(const TestConfiguration &config)
 
             thread_result["analysis"] = {
                 {"soa_vs_aos_parallel_outer", round2(soa_vs_aos_outer)},
-                {"soa_vs_aos_parallel_inner", round2(soa_vs_aos_inner)}};
+                {"soa_vs_aos_parallel_inner", round2(soa_vs_aos_inner)}
+            };
         }
         else
         {
             // Per sequential
             double soa_vs_aos_sequential = resultAoS_sequential.mean_execution_time_ms / resultSoA_sequential.mean_execution_time_ms;
             thread_result["analysis"] = {
-                {"soa_vs_aos_sequential", round2(soa_vs_aos_sequential)}};
+                {"soa_vs_aos_sequential", round2(soa_vs_aos_sequential)}
+            };
         }
 
         // Salva risultato per questo thread count
@@ -505,7 +581,8 @@ nlohmann::json Benchmark::run_test(const TestConfiguration &config)
         {"baseline_soa_time_ms", round2(resultSoA_sequential.mean_execution_time_ms)},
         {"baseline_aos_time_ms", round2(resultAoS_sequential.mean_execution_time_ms)},
         {"baseline_soa_vs_aos", round2(resultAoS_sequential.mean_execution_time_ms / resultSoA_sequential.mean_execution_time_ms)},
-        {"tested_thread_counts", config.thread_counts}};
+        {"tested_thread_counts", config.thread_counts}
+    };
 
     return result;
 }
