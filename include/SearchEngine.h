@@ -11,7 +11,6 @@
 class SearchEngine
 {
 public:
-    // ricerca sequenziale
     static std::pair<std::vector<double>, size_t> searchSequentialSoA(
         const TimeSeriesSoA &dataset,
         const TimeSeries &query);
@@ -26,7 +25,6 @@ public:
         const TimeSeriesAoS &dataset,
         const TimeSeries &query);
 
-    // parallelizzazione sliding window
     static std::pair<std::vector<double>, size_t> searchParallelSoAOuter(
         const TimeSeriesSoA &dataset,
         const TimeSeries &query);

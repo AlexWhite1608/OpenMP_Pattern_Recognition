@@ -107,12 +107,10 @@ std::pair<std::vector<double>, size_t> SearchEngine::searchParallelAoSOuter(cons
 
             double minSad = std::numeric_limits<double>::max();
 
-            // Loop sequenziale sulle posizioni nella serie
             for (size_t j = 0; j <= seriesLength - queryLength; ++j)
             {
                 double sad = 0.0;
 
-                // Vettorizzazione del calcolo SAD
 #pragma omp simd reduction(+ : sad)
                 for (size_t k = 0; k < queryLength; ++k)
                 {
@@ -127,7 +125,6 @@ std::pair<std::vector<double>, size_t> SearchEngine::searchParallelAoSOuter(cons
 
             sadValues[i] = minSad;
 
-            // Aggiorna il migliore locale
             if (minSad < localBestSad)
             {
                 localBestSad = minSad;
@@ -135,7 +132,6 @@ std::pair<std::vector<double>, size_t> SearchEngine::searchParallelAoSOuter(cons
             }
         }
 
-        // Sezione critica per aggiornare il migliore globale
 #pragma omp critical
         {
             if (localBestSad < bestSad)
@@ -226,7 +222,6 @@ std::pair<std::vector<double>, size_t> SearchEngine::searchParallelSoAOuter(cons
                 double sad = 0.0;
 
                 // Calcolo SAD con accesso SoA
-                // Nota: questo può essere meno cache-friendly di AoS
 #pragma omp simd reduction(+ : sad)
                 for (size_t k = 0; k < queryLength; ++k)
                 {

@@ -5,18 +5,15 @@ import os
 from pathlib import Path
 import seaborn as sns
 
-# Configura lo stile dei grafici
 plt.style.use('seaborn-v0_8')
 sns.set_palette("husl")
 
 def load_benchmark_data(json_file):
-    """Carica i dati dal file JSON"""
     with open(json_file, 'r') as f:
         data = json.load(f)
     return data
 
 def extract_thread_scaling_data(data):
-    """Estrae i dati di scaling per thread dal nuovo formato JSON"""
     results = []
     
     for test in data['tests']:
@@ -25,9 +22,8 @@ def extract_thread_scaling_data(data):
             
         test_name = test['test_name']
         config = test['configuration']
-        thread_results = test['thread_results']  # Questa chiave esiste nel tuo JSON
+        thread_results = test['thread_results']
         
-        # Prepara struttura per questo test
         test_data = {
             'test_name': test_name,
             'config': config,
@@ -38,7 +34,6 @@ def extract_thread_scaling_data(data):
             'thread_data': {}
         }
         
-        # Estrai dati per ogni thread count
         for thread_count_str, thread_data in thread_results.items():
             thread_count = int(thread_count_str)
             
@@ -116,31 +111,21 @@ def extract_thread_scaling_data(data):
     return results
 
 def create_thread_scaling_plots(results, output_dir):
-    """Crea grafici di scaling per thread per ogni test"""
-    
     for test_data in results:
         test_name = test_data['test_name']
         config = test_data['config']
         thread_counts = sorted(test_data['thread_data'].keys())
         
-        # Modifica layout: 2 righe, prima riga con 2 colonne, seconda riga con 1 colonna centrata
-        fig = plt.figure(figsize=(16, 10))
-        gs = fig.add_gridspec(2, 2, height_ratios=[1, 1], hspace=0.3, wspace=0.3)
+        fig, ax = plt.subplots(figsize=(12, 6))
         
         fig.suptitle(f'Thread Scaling Analysis - {test_name}\n'
                     f'{config["num_series"]} series × {config["series_length"]} points '
                     f'(query: {config["query_length"]}, runs: {config["num_runs"]})', 
                     fontsize=16, fontweight='bold')
         
-        # Prepara i dati
-        soa_outer_times = []
         soa_outer_speedups = []
-        soa_inner_times = []
         soa_inner_speedups = []
-        
-        aos_outer_times = []
         aos_outer_speedups = []
-        aos_inner_times = []
         aos_inner_speedups = []
         
         for tc in thread_counts:
@@ -148,84 +133,40 @@ def create_thread_scaling_plots(results, output_dir):
             
             if tc == 1:
                 # Sequential
-                soa_time = thread_info['soa']['sequential']['mean_time']
-                aos_time = thread_info['aos']['sequential']['mean_time']
-                
-                soa_outer_times.append(soa_time)
                 soa_outer_speedups.append(1.0)
-                soa_inner_times.append(soa_time)
                 soa_inner_speedups.append(1.0)
-                
-                aos_outer_times.append(aos_time)
                 aos_outer_speedups.append(1.0)
-                aos_inner_times.append(aos_time)
                 aos_inner_speedups.append(1.0)
             else:
                 # Parallel
-                soa_outer_times.append(thread_info['soa']['parallel_outer']['mean_time'])
                 soa_outer_speedups.append(thread_info['soa']['parallel_outer']['speedup'])
-                
-                soa_inner_times.append(thread_info['soa']['parallel_inner']['mean_time'])
                 soa_inner_speedups.append(thread_info['soa']['parallel_inner']['speedup'])
-                
-                aos_outer_times.append(thread_info['aos']['parallel_outer']['mean_time'])
                 aos_outer_speedups.append(thread_info['aos']['parallel_outer']['speedup'])
-                
-                aos_inner_times.append(thread_info['aos']['parallel_inner']['mean_time'])
                 aos_inner_speedups.append(thread_info['aos']['parallel_inner']['speedup'])
         
-        # GRAFICO 1: Execution Time vs Thread Count (top-left)
-        ax1 = fig.add_subplot(gs[0, 0])
-        ax1.plot(thread_counts, soa_outer_times, 'bo-', label='SoA Outer', linewidth=2, markersize=8)
-        ax1.plot(thread_counts, soa_inner_times, 'b^--', label='SoA Inner', linewidth=2, markersize=8)
-        ax1.plot(thread_counts, aos_outer_times, 'ro-', label='AoS Outer', linewidth=2, markersize=8)
-        ax1.plot(thread_counts, aos_inner_times, 'r^--', label='AoS Inner', linewidth=2, markersize=8)
-        ax1.set_xlabel('Number of Threads')
-        ax1.set_ylabel('Execution Time (ms)')
-        ax1.set_title('Execution Time vs Thread Count')
-        ax1.legend()
-        ax1.grid(True, alpha=0.3)
-        ax1.set_yscale('log')
-        
-        # GRAFICO 2: Speedup vs Thread Count (top-right)
-        ax2 = fig.add_subplot(gs[0, 1])
-        ax2.plot(thread_counts, soa_outer_speedups, 'bo-', label='SoA Outer', linewidth=2, markersize=8)
-        ax2.plot(thread_counts, soa_inner_speedups, 'b^--', label='SoA Inner', linewidth=2, markersize=8)
-        ax2.plot(thread_counts, aos_outer_speedups, 'ro-', label='AoS Outer', linewidth=2, markersize=8)
-        ax2.plot(thread_counts, aos_inner_speedups, 'r^--', label='AoS Inner', linewidth=2, markersize=8)
-        ax2.plot(thread_counts, thread_counts, 'k--', alpha=0.5, label='Linear Speedup')
-        ax2.set_xlabel('Number of Threads')
-        ax2.set_ylabel('Speedup')
-        ax2.set_title('Speedup vs Thread Count')
-        ax2.legend()
-        ax2.grid(True, alpha=0.3)
-        
-        # GRAFICO 3: SoA vs AoS Comparison (bottom, spanning both columns)
-        ax3 = fig.add_subplot(gs[1, :])
         best_soa_speedups = [max(soa_outer_speedups[i], soa_inner_speedups[i]) for i in range(len(thread_counts))]
         best_aos_speedups = [max(aos_outer_speedups[i], aos_inner_speedups[i]) for i in range(len(thread_counts))]
         
         width = 0.35
         x = np.arange(len(thread_counts))
-        bars1 = ax3.bar(x - width/2, best_soa_speedups, width, label='SoA Best', alpha=0.8, color='blue')
-        bars2 = ax3.bar(x + width/2, best_aos_speedups, width, label='AoS Best', alpha=0.8, color='red')
+        bars1 = ax.bar(x - width/2, best_soa_speedups, width, label='SoA Best', alpha=0.8, color='blue')
+        bars2 = ax.bar(x + width/2, best_aos_speedups, width, label='AoS Best', alpha=0.8, color='red')
         
-        ax3.set_xlabel('Number of Threads')
-        ax3.set_ylabel('Best Speedup')
-        ax3.set_title('Best Speedup Comparison: SoA vs AoS')
-        ax3.set_xticks(x)
-        ax3.set_xticklabels(thread_counts)
-        ax3.legend()
-        ax3.grid(True, alpha=0.3)
+        ax.set_xlabel('Number of Threads')
+        ax.set_ylabel('Best Speedup')
+        ax.set_title('Best Speedup Comparison: SoA vs AoS')
+        ax.set_xticks(x)
+        ax.set_xticklabels(thread_counts)
+        ax.legend()
+        ax.grid(True, alpha=0.3)
         
-        # Aggiungi etichette sui bar
         for bar, speedup in zip(bars1, best_soa_speedups):
             height = bar.get_height()
-            ax3.text(bar.get_x() + bar.get_width()/2., height + 0.05,
+            ax.text(bar.get_x() + bar.get_width()/2., height + 0.05,
                     f'{speedup:.2f}x', ha='center', va='bottom', fontsize=8)
         for bar, speedup in zip(bars2, best_aos_speedups):
             height = bar.get_height()
-            ax3.text(bar.get_x() + bar.get_width()/2., height + 0.05,
+            ax.text(bar.get_x() + bar.get_width()/2., height + 0.05,
                     f'{speedup:.2f}x', ha='center', va='bottom', fontsize=8)
         
         plt.tight_layout()
@@ -233,15 +174,22 @@ def create_thread_scaling_plots(results, output_dir):
         plt.close()
 
 def create_comprehensive_speedup_comparison(results, output_dir):
-    """Crea un grafico complessivo che confronta tutti i test per speedup vs thread count"""
-    
-    fig, axes = plt.subplots(2, 2, figsize=(16, 12))
+    if not results:
+        return
+
+    all_thread_counts = sorted({tc for td in results for tc in td['thread_data'].keys()})
+    if not all_thread_counts:
+        return
+
+    fig, axes = plt.subplots(2, 2, figsize=(16, 12), constrained_layout=True)
     fig.suptitle('Thread Scaling Analysis', fontsize=16, fontweight='bold')
-    
+
     colors = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728']
     markers = ['o', 's', '^', 'D']
-    
-    # GRAFICO 1: SoA Outer Speedup
+
+    x_min = min(all_thread_counts) - 1
+    x_max = max(all_thread_counts) + 2
+
     ax1 = axes[0, 0]
     for idx, test_data in enumerate(results):
         test_name = test_data['test_name']
@@ -257,14 +205,15 @@ def create_comprehensive_speedup_comparison(results, output_dir):
         ax1.plot(thread_counts, speedups, f'{markers[idx % len(markers)]}-', 
                 label=test_name, color=colors[idx % len(colors)], linewidth=2, markersize=8)
     
-    ax1.plot(thread_counts, thread_counts, 'k--', alpha=0.5, label='Linear Speedup')
     ax1.set_xlabel('Number of Threads')
     ax1.set_ylabel('Speedup')
     ax1.set_title('SoA Outer Parallelization Speedup')
     ax1.legend()
     ax1.grid(True, alpha=0.3)
+    ax1.set_xlim(x_min, x_max)
+    ax1.set_ylim(0, 10)
+    ax1.set_xticks(all_thread_counts)
     
-    # GRAFICO 2: SoA Inner Speedup
     ax2 = axes[0, 1]
     for idx, test_data in enumerate(results):
         test_name = test_data['test_name']
@@ -280,14 +229,15 @@ def create_comprehensive_speedup_comparison(results, output_dir):
         ax2.plot(thread_counts, speedups, f'{markers[idx % len(markers)]}-', 
                 label=test_name, color=colors[idx % len(colors)], linewidth=2, markersize=8)
     
-    ax2.plot(thread_counts, thread_counts, 'k--', alpha=0.5, label='Linear Speedup')
     ax2.set_xlabel('Number of Threads')
     ax2.set_ylabel('Speedup')
     ax2.set_title('SoA Inner Parallelization Speedup')
     ax2.legend()
     ax2.grid(True, alpha=0.3)
+    ax2.set_xlim(x_min, x_max)
+    ax2.set_ylim(0, 10)
+    ax2.set_xticks(all_thread_counts)
     
-    # GRAFICO 3: AoS Outer Speedup
     ax3 = axes[1, 0]
     for idx, test_data in enumerate(results):
         test_name = test_data['test_name']
@@ -303,14 +253,15 @@ def create_comprehensive_speedup_comparison(results, output_dir):
         ax3.plot(thread_counts, speedups, f'{markers[idx % len(markers)]}-', 
                 label=test_name, color=colors[idx % len(colors)], linewidth=2, markersize=8)
     
-    ax3.plot(thread_counts, thread_counts, 'k--', alpha=0.5, label='Linear Speedup')
     ax3.set_xlabel('Number of Threads')
     ax3.set_ylabel('Speedup')
     ax3.set_title('AoS Outer Parallelization Speedup')
     ax3.legend()
     ax3.grid(True, alpha=0.3)
+    ax3.set_xlim(x_min, x_max)
+    ax3.set_ylim(0, 10)
+    ax3.set_xticks(all_thread_counts)
     
-    # GRAFICO 4: AoS Inner Speedup
     ax4 = axes[1, 1]
     for idx, test_data in enumerate(results):
         test_name = test_data['test_name']
@@ -326,21 +277,21 @@ def create_comprehensive_speedup_comparison(results, output_dir):
         ax4.plot(thread_counts, speedups, f'{markers[idx % len(markers)]}-', 
                 label=test_name, color=colors[idx % len(colors)], linewidth=2, markersize=8)
     
-    ax4.plot(thread_counts, thread_counts, 'k--', alpha=0.5, label='Linear Speedup')
     ax4.set_xlabel('Number of Threads')
     ax4.set_ylabel('Speedup')
     ax4.set_title('AoS Inner Parallelization Speedup')
     ax4.legend()
     ax4.grid(True, alpha=0.3)
+    ax4.set_xlim(x_min, x_max)
+    ax4.set_ylim(0, 10)
+    ax4.set_xticks(all_thread_counts)
     
-    plt.tight_layout()
     plt.savefig(os.path.join(output_dir, 'comprehensive_speedup_comparison.png'), dpi=300, bbox_inches='tight')
     plt.close()
-
-def create_baseline_comparison(results, output_dir):
-    """Crea grafico di confronto delle baseline sequenziali"""
     
-    fig, axes = plt.subplots(1, 2, figsize=(15, 6))
+def create_baseline_comparison(results, output_dir):
+    
+    fig, ax = plt.subplots(figsize=(12, 6))
     fig.suptitle('Sequential Baseline Comparison', fontsize=16, fontweight='bold')
     
     test_names = [r['test_name'] for r in results]
@@ -349,49 +300,28 @@ def create_baseline_comparison(results, output_dir):
     
     soa_baselines = [r['baseline_soa'] for r in results]
     aos_baselines = [r['baseline_aos'] for r in results]
-    soa_advantages = [r['baseline_soa_vs_aos'] for r in results]
     
-    # Grafico 1: Tempi baseline
-    bars1 = axes[0].bar(x - width/2, soa_baselines, width, label='SoA Sequential', alpha=0.8, color='blue')
-    bars2 = axes[0].bar(x + width/2, aos_baselines, width, label='AoS Sequential', alpha=0.8, color='orange')
+    bars1 = ax.bar(x - width/2, soa_baselines, width, label='SoA Sequential', alpha=0.8, color='blue')
+    bars2 = ax.bar(x + width/2, aos_baselines, width, label='AoS Sequential', alpha=0.8, color='orange')
     
-    axes[0].set_xlabel('Test Configuration')
-    axes[0].set_ylabel('Execution Time (ms)')
-    axes[0].set_title('Sequential Baseline Times')
-    axes[0].set_xticks(x)
-    axes[0].set_xticklabels(test_names, rotation=45, ha='right')
-    axes[0].legend()
-    axes[0].grid(True, alpha=0.3)
-    
-    # Grafico 2: SoA Advantage
-    bars3 = axes[1].bar(x, soa_advantages, width, alpha=0.8, color='green')
-    
-    axes[1].set_xlabel('Test Configuration')
-    axes[1].set_ylabel('SoA Advantage (AoS_time / SoA_time)')
-    axes[1].set_title('SoA vs AoS Sequential Performance')
-    axes[1].set_xticks(x)
-    axes[1].set_xticklabels(test_names, rotation=45, ha='right')
-    axes[1].legend()
-    axes[1].grid(True, alpha=0.3)
-    
-    # Aggiungi etichette
-    for bar, adv in zip(bars3, soa_advantages):
-        height = bar.get_height()
-        axes[1].text(bar.get_x() + bar.get_width()/2., height + 0.01,
-                    f'{adv:.2f}x', ha='center', va='bottom', fontsize=10)
+    ax.set_xlabel('Test Configuration')
+    ax.set_ylabel('Execution Time (ms)')
+    ax.set_title('Sequential Baseline Times')
+    ax.set_xticks(x)
+    ax.set_xticklabels(test_names, rotation=45, ha='right')
+    ax.legend()
+    ax.grid(True, alpha=0.3)
     
     plt.tight_layout()
     plt.savefig(os.path.join(output_dir, 'baseline_comparison.png'), dpi=300, bbox_inches='tight')
     plt.close()
 
 def create_summary_table(results, output_dir):
-    """Crea tabella riassuntiva con focus su thread scaling"""
     
     fig, ax = plt.subplots(figsize=(20, 8))
     ax.axis('tight')
     ax.axis('off')
     
-    # Prepara i dati per la tabella
     table_data = []
     headers = ['Test', 'Config', 'Baseline\nSoA (ms)', 'Baseline\nAoS (ms)', 'SoA\nAdvantage',
                'Best SoA\nSpeedup', 'Best SoA\nThreads', 'Best AoS\nSpeedup', 'Best AoS\nThreads']
@@ -399,7 +329,6 @@ def create_summary_table(results, output_dir):
     for test_data in results:
         config = test_data['config']
         
-        # Trova migliori speedup
         best_soa_speedup = 1.0
         best_soa_threads = 1
         best_aos_speedup = 1.0
@@ -441,7 +370,6 @@ def create_summary_table(results, output_dir):
     table.set_fontsize(10)
     table.scale(1.2, 2.0)
     
-    # Styling
     for i in range(len(headers)):
         table[(0, i)].set_facecolor('#4CAF50')
         table[(0, i)].set_text_props(weight='bold', color='white')
@@ -451,15 +379,11 @@ def create_summary_table(results, output_dir):
     plt.close()
 
 def main():
-    """Funzione principale"""
-    # Configurazione paths
     json_file = 'output/benchmark_results/parallelization_analysis.json'
     output_dir = 'output/plots'
     
-    # Crea directory output se non esiste
     Path(output_dir).mkdir(parents=True, exist_ok=True)
     
-    # Carica e processa i dati
     print("Loading thread scaling benchmark data...")
     data = load_benchmark_data(json_file)
     results = extract_thread_scaling_data(data)
@@ -470,7 +394,6 @@ def main():
     
     print(f"Processing {len(results)} test configurations with thread scaling...")
     
-    # Crea i grafici
     print("Creating individual thread scaling plots for each test...")
     create_thread_scaling_plots(results, output_dir)
     

@@ -17,7 +17,7 @@ struct BenchmarkResult
     int series_length;
     int query_length;
 
-    std::vector<double> execution_times_ms; // Tutti i tempi di ogni run
+    std::vector<double> execution_times_ms;
     double mean_execution_time_ms;
     double std_deviation_ms;
     double min_execution_time_ms;

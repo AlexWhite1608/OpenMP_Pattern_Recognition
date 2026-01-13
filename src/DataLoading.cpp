@@ -58,7 +58,6 @@ TimeSeriesSoA loadTimeSeriesSoA(const std::string &filename) {
     return dataset;
 }
 
-// Importa la query dal csv
 TimeSeries loadQueryFromCSV(const std::string &filename) {
     std::ifstream file(filename);
     std::string line;

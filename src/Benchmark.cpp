@@ -10,7 +10,6 @@
 
 namespace
 {
-    // Calcola la media
     double calculate_mean(const std::vector<double> &values)
     {
         if (values.empty())
@@ -18,7 +17,6 @@ namespace
         return std::accumulate(values.begin(), values.end(), 0.0) / values.size();
     }
 
-    // Calcola la deviazione standard
     double calculate_std_deviation(const std::vector<double> &values, double mean)
     {
         if (values.size() <= 1)
@@ -32,7 +30,6 @@ namespace
         return std::sqrt(variance);
     }
 
-    // Riempie le statistiche nel BenchmarkResult
     void fill_statistics(BenchmarkResult &result)
     {
         if (result.execution_times_ms.empty())
@@ -199,7 +196,6 @@ BenchmarkResult Benchmark::benchmarkSequentialAoS(const TimeSeriesAoS &dataset,
     {
         auto start = std::chrono::high_resolution_clock::now();
 
-        // CORREZIONE: Usa la funzione corretta per AoS
         auto [currentSadValues, currentBestIndex] = SearchEngine::searchSequentialAoS(dataset, query);
 
         auto end = std::chrono::high_resolution_clock::now();
@@ -338,14 +334,12 @@ bool Benchmark::generateDataset(const TestConfiguration &config)
                                  std::to_string(config.series_length) + "_" +
                                  std::to_string(config.query_length) + ".csv";
 
-    // controlla se i file esistono già
     if (std::filesystem::exists(dataset_filename) && std::filesystem::exists(query_filename))
     {
         std::cout << "Dataset already exists: " << dataset_filename << " and " << query_filename << std::endl;
         return true;
     }
 
-    // comando per lanciare script python
     std::ostringstream cmd;
     cmd << "cd src/utils && python3 generate_timeseries.py "
         << config.num_series << " "
@@ -364,7 +358,6 @@ bool Benchmark::generateDataset(const TestConfiguration &config)
         return false;
     }
 
-    // verifica che i file siano creati
     if (!std::filesystem::exists(dataset_filename) ||
         !std::filesystem::exists(query_filename))
     {
@@ -381,7 +374,6 @@ nlohmann::json Benchmark::run_test(const TestConfiguration &config)
 {
     nlohmann::json result;
 
-    // genera dataset
     if (!generateDataset(config))
     {
         result["error"] = "Failed to generate dataset";
@@ -395,18 +387,15 @@ nlohmann::json Benchmark::run_test(const TestConfiguration &config)
     std::string dataset_path = "src/utils/data/timeseries/timeseries_" + test_name + ".csv";
     std::string query_path = "src/utils/data/query/query_" + test_name + ".csv";
 
-    // CORREZIONE: Carica i dataset nei tipi corretti
     std::vector<TimeSeries> timeSeriesList = loadTimeSeriesAoS(dataset_path);
     TimeSeriesSoA datasetSoa = loadTimeSeriesSoA(dataset_path);
     TimeSeries query = loadQueryFromCSV(query_path);
 
-    // CORREZIONE: Converte il vector<TimeSeries> in TimeSeriesAoS
     TimeSeriesAoS datasetAos;
     for (const auto& ts : timeSeriesList) {
         datasetAos.addSeries(ts.getData());
     }
 
-    // CORREZIONE: Controlli di validità corretti
     if (datasetAos.getNumSeries() == 0 || query.getSize() == 0)
     {
         result["error"] = "Failed to load dataset or query";
@@ -422,24 +411,19 @@ nlohmann::json Benchmark::run_test(const TestConfiguration &config)
         {"num_runs", config.num_runs},
         {"thread_counts", config.thread_counts}};
 
-    // NEW: Struttura organizzata per thread count
     result["thread_results"] = nlohmann::json::object();
 
-    // Arrotonda a due decimali
     auto round2 = [](double value)
     {
         return std::round(value * 100.0) / 100.0;
     };
 
-    // Baseline sequenziale (eseguito una volta sola)
     omp_set_num_threads(1);
     std::cout << "Running sequential baseline for " << test_name << std::endl;
     
-    // CORREZIONE: Passa query direttamente, non query[0]
     auto resultSoA_sequential = benchmarkSequentialSoA(datasetSoa, query, test_name, config.num_runs);
     auto resultAoS_sequential = benchmarkSequentialAoS(datasetAos, query, test_name, config.num_runs);
 
-    // Testa ogni thread count
     for (int thread_count : config.thread_counts)
     {
         omp_set_num_threads(thread_count);
@@ -477,13 +461,11 @@ nlohmann::json Benchmark::run_test(const TestConfiguration &config)
         }
         else
         {
-            // Per thread > 1, esegui test paralleli - CORREZIONE: passa query direttamente
             auto resultSoA_parallelOuter = benchmarkSoA_parallelOuter(datasetSoa, query, test_name, config.num_runs);
             auto resultSoA_parallelInner = benchmarkSoA_parallelInner(datasetSoa, query, test_name, config.num_runs);
             auto resultAoS_parallelOuter = benchmarkAoS_parallelOuter(datasetAos, query, test_name, config.num_runs);
             auto resultAoS_parallelInner = benchmarkAoS_parallelInner(datasetAos, query, test_name, config.num_runs);
 
-            // Calcolo speedup e efficiency
             double soa_outer_speedup = resultSoA_sequential.mean_execution_time_ms / resultSoA_parallelOuter.mean_execution_time_ms;
             double soa_inner_speedup = resultSoA_sequential.mean_execution_time_ms / resultSoA_parallelInner.mean_execution_time_ms;
             double aos_outer_speedup = resultAoS_sequential.mean_execution_time_ms / resultAoS_parallelOuter.mean_execution_time_ms;
@@ -549,10 +531,8 @@ nlohmann::json Benchmark::run_test(const TestConfiguration &config)
             };
         }
 
-        // Aggiungi analisi comparative per questo thread count
         if (thread_count > 1)
         {
-            // Confronti SoA vs AoS per questo thread count
             double soa_vs_aos_outer = thread_result["aos"]["parallel_outer"]["mean_execution_time_ms"].get<double>() /
                                       thread_result["soa"]["parallel_outer"]["mean_execution_time_ms"].get<double>();
             double soa_vs_aos_inner = thread_result["aos"]["parallel_inner"]["mean_execution_time_ms"].get<double>() /
@@ -565,18 +545,15 @@ nlohmann::json Benchmark::run_test(const TestConfiguration &config)
         }
         else
         {
-            // Per sequential
             double soa_vs_aos_sequential = resultAoS_sequential.mean_execution_time_ms / resultSoA_sequential.mean_execution_time_ms;
             thread_result["analysis"] = {
                 {"soa_vs_aos_sequential", round2(soa_vs_aos_sequential)}
             };
         }
 
-        // Salva risultato per questo thread count
         result["thread_results"][std::to_string(thread_count)] = thread_result;
     }
 
-    // Aggiungi summary complessivo
     result["summary"] = {
         {"baseline_soa_time_ms", round2(resultSoA_sequential.mean_execution_time_ms)},
         {"baseline_aos_time_ms", round2(resultAoS_sequential.mean_execution_time_ms)},

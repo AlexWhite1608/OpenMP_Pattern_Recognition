@@ -62,3 +62,5 @@ Testing/
 src/utils/data/
 
 output/
+
+generate_plots.py
